@@ -379,9 +379,19 @@ void ApplicationController::setHudOpen(bool open)
 // keys of whatever window still had focus. Repeated calls are harmless: the
 // first success sets m_compositorModeActive and the rest return early, which
 // matters because niri's action is a toggle rather than an idempotent set.
+//
+// m_hudOpen is part of the guard, not an optimisation. showAndFocusWindow()
+// calls requestActivate(), and the compositor may answer with activeChanged
+// after the HUD has already been hidden again (show then hide sent back to
+// back). At that point hideHud() has reset the mode and cleared
+// m_compositorModeActive, so entering it here would restore the hyprendfield
+// submap with nothing left to leave it: the HUD is gone, and every global
+// shortcut stays bound to the submap until the next hide resets it. The HUD's
+// own open state is the authority on whether the mode belongs on, so a late
+// focus event is dropped instead.
 void ApplicationController::activateCompositorMode()
 {
-    if (m_compositorModeActive || !m_window) {
+    if (!m_hudOpen || m_compositorModeActive || !m_window) {
         return;
     }
     if (!qEnvironmentVariableIsEmpty("HYPRLAND_INSTANCE_SIGNATURE")) {
