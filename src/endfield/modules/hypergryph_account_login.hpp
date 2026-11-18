@@ -30,8 +30,8 @@ std::optional<std::string> decodeCredential(const Json& body,std::string_view no
                                             const std::optional<ParsedURL>& frameOrigin,const std::optional<ParsedURL>& pageURL);
 std::optional<LoginResult> decodeSession(const Json& body,std::string_view nonce,Region,bool mainFrame,
                                          const std::optional<ParsedURL>& frameOrigin,const std::optional<ParsedURL>& pageURL);
-// Script flavours: macOS (WKScriptMessageHandler) reproduces the Mac text
-// byte-for-byte; webView2 posts {channel,body} through chrome.webview.
+// Script flavours: macOS (WKScriptMessageHandler) mirrors the Mac text, with
+// the device ID optional; webView2 posts {channel,body} through chrome.webview.
 enum class ScriptHost {macOS,webView2};
 std::string bridgeScript(Region,std::string_view nonce,ScriptHost=ScriptHost::webView2);
 std::string credentialReadScript(Region,std::string_view nonce,ScriptHost=ScriptHost::webView2);
