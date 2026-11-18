@@ -107,7 +107,12 @@ std::optional<LoginResult> decodeSession(const Json& body,std::string_view nonce
     const auto& o=body.object();
     if(o.size()!=4||!body.contains("nonce")||!body.contains("cred")||!body.contains("signingToken")||!body.contains("deviceID")) return std::nullopt;
     if(!body["nonce"].isString()||body["nonce"].string()!=nonce) return std::nullopt;
-    for(const char* key:{"cred","signingToken","deviceID"}) if(!body[key].isString()||!acceptsCredential(body[key].string())) return std::nullopt;
+    for(const char* key:{"cred","signingToken"}) if(!body[key].isString()||!acceptsCredential(body[key].string())) return std::nullopt;
+    if(body["deviceID"].isNull()) {
+        if(r==Region::mainland) return std::nullopt;
+        return LoginResult{r,body["cred"].string(),body["signingToken"].string(),std::nullopt};
+    }
+    if(!body["deviceID"].isString()||!acceptsCredential(body["deviceID"].string())) return std::nullopt;
     return LoginResult{r,body["cred"].string(),body["signingToken"].string(),body["deviceID"].string()};
 }
 std::string bridgeScript(Region r,std::string_view nonce,ScriptHost host) {
@@ -120,17 +125,18 @@ std::string bridgeScript(Region r,std::string_view nonce,ScriptHost host) {
         "  const read = () => {\n"
         "    const value = readSession();\n"
         "    if (!valid(value.cred)) return;\n"
-        "    if (!valid(value.signingToken) || !valid(value.deviceID)) {\n"
+        "    if (!valid(value.signingToken)) {\n"
         "      if (!missingReported) {\n"
         "        missingReported = true;\n"
         "        "+poster(stateMessageName,"{nonce:'"+n+"',event:'context-missing'}",host)+";\n"
         "      }\n"
         "      return;\n"
         "    }\n"
-        "    const signature = JSON.stringify([value.cred, value.signingToken, value.deviceID]);\n"
+        "    const deviceID = valid(value.deviceID) ? value.deviceID : null;\n"
+        "    const signature = JSON.stringify([value.cred, value.signingToken, deviceID]);\n"
         "    if (last === signature) return;\n"
         "    last = signature;\n"
-        "    "+poster(messageName,"{nonce:'"+n+"',cred:value.cred,signingToken:value.signingToken,deviceID:value.deviceID}",host)+";\n"
+        "    "+poster(messageName,"{nonce:'"+n+"',cred:value.cred,signingToken:value.signingToken,deviceID:(valid(value.deviceID)?value.deviceID:null)}",host)+";\n"
         "  };\n"
         "  const original = Storage.prototype.setItem;\n"
         "  Storage.prototype.setItem = function(name, value) {\n"
@@ -154,8 +160,8 @@ std::string credentialReadScript(Region r,std::string_view nonce,ScriptHost host
         "  if (window.top !== window || location.origin !== '"+origin(r)+"') return;\n"
         "  "+sessionReader()+"\n"
         "  const value = readSession();\n"
-        "  if (valid(value.cred) && valid(value.signingToken) && valid(value.deviceID))\n"
-        "    "+poster(messageName,"{nonce:'"+n+"',cred:value.cred,signingToken:value.signingToken,deviceID:value.deviceID}",host)+";\n"
+        "  if (valid(value.cred) && valid(value.signingToken))\n"
+        "    "+poster(messageName,"{nonce:'"+n+"',cred:value.cred,signingToken:value.signingToken,deviceID:(valid(value.deviceID)?value.deviceID:null)}",host)+";\n"
         "})();";
 }
 std::string directLoginScript(Region r,std::string_view nonce,ScriptHost host) {
