@@ -79,6 +79,7 @@ qt_add_executable(hyprendfield
     src/orbipomcontroller.hpp
     src/appshortcutscontroller.cpp src/appshortcutscontroller.hpp
     src/wallpapercontroller.cpp src/wallpapercontroller.hpp
+    src/chargecontroller.cpp src/chargecontroller.hpp
     ${EVENT_LOG_SOURCES}
     src/mediainfo.cpp
     src/mediainfo.hpp
@@ -182,6 +183,7 @@ qt_add_qml_module(hyprendfield
         qml/ActivityFormat.js
         qml/CalendarPage.qml
         qml/WallpaperPage.qml
+        qml/ChargePage.qml
         qml/CalendarFormat.js
         qml/CalendarButton.qml
         qml/CalendarDayCell.qml
@@ -303,6 +305,7 @@ qt_add_resources(hyprendfield "hyprendfield_assets"
         assets/icons/work-mode.png
         assets/icons/calendar.png
         assets/icons/wallpaper.png
+        assets/icons/charge.png
         assets/icons/SOURCES.json
         assets/fonts/HarmonyOS_Sans_Regular.ttf
         assets/fonts/HarmonyOS_Sans_Medium.ttf
@@ -364,7 +367,7 @@ if(BUILD_TESTING)
         SETTINGS_QML_DIR="${CMAKE_CURRENT_SOURCE_DIR}/qml" SETTINGS_PREVIEW_DIR="${CMAKE_CURRENT_BINARY_DIR}/settings-preview")
     qt_add_resources(hyprendfield_settings_tests "settings_test_assets" PREFIX "/" BASE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SETTINGS_ASSETS} ${HUD_SOUND_ASSETS} ${MENU_VECTOR_ASSETS}
         assets/icons/notes.png assets/icons/file-shelf.png assets/icons/clipboard.png assets/icons/archive.png
-        assets/icons/reader.png assets/icons/work-mode.png assets/icons/calendar.png assets/icons/wallpaper.png assets/icons/projection.png assets/icons/media-assembly.png assets/icons/minigame.png assets/icons/event-log.png)
+        assets/icons/reader.png assets/icons/work-mode.png assets/icons/calendar.png assets/icons/wallpaper.png assets/icons/charge.png assets/icons/projection.png assets/icons/media-assembly.png assets/icons/minigame.png assets/icons/event-log.png)
     add_test(NAME settings COMMAND hyprendfield_settings_tests)
     set_tests_properties(settings PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software" TIMEOUT 45)
 endif()
