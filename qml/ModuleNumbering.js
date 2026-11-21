@@ -1,7 +1,7 @@
 // Only pages with an existing MOD header participate. Playback and focus keep
 // their original headerless layouts; SYS labels use their separate numbering.
 var headerModules = ["notes", "fileShelf", "clipboard", "archive", "volume", "reader",
-    "calendar", "wallpaper", "charge", "projection", "mediaAssembly", "minigame", "eventLog", "account"];
+    "calendar", "wallpaper", "charge", "bar", "projection", "mediaAssembly", "minigame", "eventLog", "account"];
 
 function code(key) {
     const settings = typeof settingsController === "undefined" ? null : settingsController;

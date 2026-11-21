@@ -12,13 +12,18 @@ Item {
     readonly property var latest: activity.latest || ({})
     readonly property var battery: batteryController.state
     property int index: 0
-    readonly property var profiles: [
+    readonly property var allProfiles: [
         { key: "cpu", title: qsTr("处理器"), tag: "/// PROCESSOR" },
         { key: "memory", title: qsTr("内存"), tag: "/// MEMORY" },
         { key: "battery", title: qsTr("电池"), tag: "/// BATTERY" },
         { key: "network", title: qsTr("网络"), tag: "/// NETWORK" },
         { key: "gpu", title: qsTr("显卡"), tag: "/// GRAPHICS" }
     ]
+    readonly property var enabledKeys: settingsController.barProfiles || []
+    readonly property var profiles: {
+        const list = allProfiles.filter(entry => enabledKeys.indexOf(entry.key) >= 0)
+        return list.length > 0 ? list : allProfiles
+    }
     readonly property var current: profiles[Math.max(0, Math.min(profiles.length - 1, index))]
 
     readonly property real cpu: latest.cpu !== undefined && latest.cpu !== null && latest.cpu !== "" ? Number(latest.cpu) : NaN
@@ -88,7 +93,11 @@ Item {
     property bool animating: false
 
     function advance() {
-        if (animating) return
+        if (animating || profiles.length === 0) return
+        if (!settingsController.barAnimation) {
+            index = (index + 1) % profiles.length
+            return
+        }
         animating = true
         cycle.restart()
     }
@@ -158,7 +167,7 @@ Item {
     }
 
     Timer {
-        interval: 6000
+        interval: Math.max(2, Number(settingsController.barInterval) || 6) * 1000
         running: true
         repeat: true
         onTriggered: bar.advance()
@@ -171,7 +180,7 @@ Item {
         y: 14
         width: 560
         height: 100
-        scale: bar.pillScale
+        scale: bar.pillScale * (Number(settingsController.barScale) || 1)
         opacity: bar.pillOpacity
         transformOrigin: Item.Center
 

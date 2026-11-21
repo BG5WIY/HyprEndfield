@@ -73,7 +73,7 @@ const QStringList accents{"#FAD41F", "#6EDFE8", "#A8E58B", "#C9A2FF", "#FF8F78"}
 }
 
 QStringList SettingsController::defaultModules() {
-    return {"notes", "fileShelf", "clipboard", "archive", "nowPlaying", "volume", "reader", "workMode", "calendar", "wallpaper", "charge", "projection", "mediaAssembly", "minigame", "eventLog", "account"};
+    return {"notes", "fileShelf", "clipboard", "archive", "nowPlaying", "volume", "reader", "workMode", "calendar", "wallpaper", "charge", "bar", "projection", "mediaAssembly", "minigame", "eventLog", "account"};
 }
 
 SettingsController::SettingsController(QObject *parent, QString preferences, QString autostart, QString data)
@@ -91,7 +91,9 @@ SettingsController::SettingsController(QObject *parent, QString preferences, QSt
         {"moduleOrder", defaultModules()}, {"hiddenModules", QStringList{}},
         {"batteryMethod", 0}, {"batteryDuration", 10.0}, {"batteryPlacement", 0}, {"batteryScale", 1.0},
         {"batteryX", .5}, {"batteryY", .12}, {"batteryMetric", 0},
-        {"wallpaperBackend", "wallpaperengine"}, {"wallpaperCommand", ""}};
+        {"wallpaperBackend", "wallpaperengine"}, {"wallpaperCommand", ""},
+        {"barEnabled", true}, {"barInterval", 6}, {"barAnimation", true}, {"barScale", 1.0},
+        {"barProfiles", QStringList{"cpu", "memory", "battery", "network", "gpu"}}};
     QFile manifest(":/assets/settings/application-icons/manifest.json");
     if (manifest.open(QIODevice::ReadOnly)) {
         const auto entries = QJsonDocument::fromJson(manifest.readAll()).object()["icons"].toArray();
