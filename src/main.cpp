@@ -10,6 +10,7 @@
 #include "appshortcutscontroller.hpp"
 #include "wallpapercontroller.hpp"
 #include "chargecontroller.hpp"
+#include "barwindow.hpp"
 #include "projectioncanvas.hpp"
 #include "mediaeditor.hpp"
 #include "centerlogo.hpp"
@@ -290,6 +291,9 @@ int main(int argc, char *argv[])
     QObject::connect(&gameProfile, &ProfileController::cropChanged, &eventLog, [&](const QString &target) { eventLog.record("profileCropChanged", {{"target", target}}); });
     WallpaperController wallpaper;
     ChargeController charge;
+    QObject::connect(&charge, &ChargeController::settingsRequested, &controller, [&] {
+        if (controller.hudVisible()) controller.hideHud();
+    });
     AppShortcutsController appShortcuts;
     QObject::connect(&settings, &SettingsController::languageChanged, &appShortcuts, &AppShortcutsController::changed);
     QObject::connect(&appShortcuts, &AppShortcutsController::launchRequested, &controller, [&] {
@@ -391,6 +395,9 @@ int main(int argc, char *argv[])
     if (engine.rootObjects().isEmpty()) {
         return 1;
     }
+
+    // 常驻顶部 bar（layer-shell top 层）。数据和动画都在 Bar.qml 里。
+    BarWindow bar(&engine);
 
     auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
     if (!window) {

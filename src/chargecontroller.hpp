@@ -35,6 +35,8 @@ public:
 signals:
     void changed();
     void failed(const QString &reason);
+    // 打开设置窗口前，HUD 应先收起，否则全屏 overlay 会挡住它。
+    void settingsRequested();
 
 private:
     QString detectExecutable() const;

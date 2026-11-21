@@ -63,8 +63,10 @@ QString ChargeController::detectExecutable() const {
 
 bool ChargeController::processRunning() const {
     if (!m_installed) return false;
+    // 启动脚本 exec 之后进程名是 EndfieldChargePlus，不能只匹配包装脚本名。
     const auto name = QFileInfo(m_executable).fileName();
-    const auto pattern = QRegularExpression::escape(name);
+    auto pattern = QRegularExpression::escape(name);
+    if (name != QLatin1String("EndfieldChargePlus")) pattern += QStringLiteral("|EndfieldChargePlus");
     QProcess process;
     process.start(QStringLiteral("pgrep"), {QStringLiteral("-f"), pattern});
     return process.waitForFinished(1200) && process.exitCode() == 0;
@@ -124,6 +126,10 @@ void ChargeController::refresh() {
 }
 
 bool ChargeController::launch() {
+    // 它是 Avalonia/X11 程序：从 Hyprland 自启时 DISPLAY 已存在，
+    // 手工启动 HUD 时补一个，否则二次实例无法连接 XWayland。
+    if (qEnvironmentVariableIsEmpty("DISPLAY") && QFileInfo::exists(QStringLiteral("/tmp/.X11-unix/X0")))
+        qputenv("DISPLAY", ":0");
     if (!m_installed) {
         setError(tr("Endfield Charge Plus is not installed"));
         return false;
@@ -151,7 +157,9 @@ bool ChargeController::stop() {
         return true;
     }
     const auto name = QFileInfo(m_executable).fileName();
-    QProcess::execute(QStringLiteral("pkill"), {QStringLiteral("-f"), QRegularExpression::escape(name)});
+    auto pattern = QRegularExpression::escape(name);
+    if (name != QLatin1String("EndfieldChargePlus")) pattern += QStringLiteral("|EndfieldChargePlus");
+    QProcess::execute(QStringLiteral("pkill"), {QStringLiteral("-f"), pattern});
     m_running = false;
     m_settings[QStringLiteral("running")] = false;
     emit changed();
@@ -159,10 +167,13 @@ bool ChargeController::stop() {
 }
 
 bool ChargeController::openSettings() {
+    if (qEnvironmentVariableIsEmpty("DISPLAY") && QFileInfo::exists(QStringLiteral("/tmp/.X11-unix/X0")))
+        qputenv("DISPLAY", ":0");
     if (!m_installed) {
         setError(tr("Endfield Charge Plus is not installed"));
         return false;
     }
+    emit settingsRequested();
     // 再次启动会通知已在运行的实例打开设置窗口；未运行时先拉起来。
     if (!QProcess::startDetached(m_executable, {})) {
         setError(tr("Cannot open Endfield Charge Plus settings"));

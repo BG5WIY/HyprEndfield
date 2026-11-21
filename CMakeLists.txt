@@ -80,6 +80,7 @@ qt_add_executable(hyprendfield
     src/appshortcutscontroller.cpp src/appshortcutscontroller.hpp
     src/wallpapercontroller.cpp src/wallpapercontroller.hpp
     src/chargecontroller.cpp src/chargecontroller.hpp
+    src/barwindow.cpp src/barwindow.hpp
     ${EVENT_LOG_SOURCES}
     src/mediainfo.cpp
     src/mediainfo.hpp
@@ -184,6 +185,7 @@ qt_add_qml_module(hyprendfield
         qml/CalendarPage.qml
         qml/WallpaperPage.qml
         qml/ChargePage.qml
+        qml/Bar.qml
         qml/CalendarFormat.js
         qml/CalendarButton.qml
         qml/CalendarDayCell.qml
