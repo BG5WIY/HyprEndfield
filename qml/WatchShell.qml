@@ -131,6 +131,11 @@ Item {
             icon: "qrc:/assets/icons/calendar.png"
         },
         {
+            key: "wallpaper",
+            label: qsTr("壁纸"),
+            icon: "qrc:/assets/icons/wallpaper.png"
+        },
+        {
             key: "projection", label: qsTr("投影"), icon: "qrc:/assets/icons/projection.png"
         },
         {

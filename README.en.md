@@ -15,6 +15,7 @@ The dial, cards, animations and assets follow the original project as closely as
 - Use notes, video notes, to-dos, drawing, the clipboard, the file shelf, the archive, the reader, the calendar, a quick terminal and app shortcuts.
 - Control SPlayer and show its cover art, progress and lyrics; adjust audio devices and per-app volume.
 - Process images and videos, draw on full-screen projections, show a dot-matrix background, place images and play videos.
+- Switch Wallpaper Engine wallpapers: browse Workshop thumbnails on the Wallpaper page and click to apply one to the focused monitor (shares the state file and engine arguments with waybar-endfield's wallpaper-picker).
 - View storage, CPU, memory, GPU, network, battery and facility alerts, and use countdown/count-up focus modes.
 - Link a Hypergryph account to show Endfield profile data and Arknights sanity; a standalone Linux custom profile card is also available.
 - Play the “OrbiPom! MERGE!” mini-game and view the HUD's own event log.

@@ -8,6 +8,7 @@
 #include "orbipomcontroller.hpp"
 #include "eventlogcontroller.hpp"
 #include "appshortcutscontroller.hpp"
+#include "wallpapercontroller.hpp"
 #include "projectioncanvas.hpp"
 #include "mediaeditor.hpp"
 #include "centerlogo.hpp"
@@ -286,6 +287,7 @@ int main(int argc, char *argv[])
     EventLogController eventLog;
     QObject::connect(&account, &AccountController::eventOccurred, &eventLog, [&](const QString &action) { eventLog.recordAction("accountAction", action); });
     QObject::connect(&gameProfile, &ProfileController::cropChanged, &eventLog, [&](const QString &target) { eventLog.record("profileCropChanged", {{"target", target}}); });
+    WallpaperController wallpaper;
     AppShortcutsController appShortcuts;
     QObject::connect(&settings, &SettingsController::languageChanged, &appShortcuts, &AppShortcutsController::changed);
     QObject::connect(&appShortcuts, &AppShortcutsController::launchRequested, &controller, [&] {
@@ -371,6 +373,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("orbipomController"), &orbipom);
     engine.rootContext()->setContextProperty(QStringLiteral("eventLogController"), &eventLog);
     engine.rootContext()->setContextProperty(QStringLiteral("appShortcutsController"), &appShortcuts);
+    engine.rootContext()->setContextProperty(QStringLiteral("wallpaperController"), &wallpaper);
     engine.addImageProvider(QStringLiteral("shortcut-icons"), new ShortcutIconProvider(&appShortcuts));
     engine.rootContext()->setContextProperty(QStringLiteral("fileShelfController"), &fileShelf);
     engine.rootContext()->setContextProperty(QStringLiteral("archiveController"), &archive);
