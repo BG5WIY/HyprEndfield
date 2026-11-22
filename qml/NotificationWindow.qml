@@ -2,13 +2,14 @@ import QtQuick
 import "Appearance.js" as Appearance
 
 // HyprEndfield 通知内容（由 C++ 的 NotificationWindow 加载到独立 layer-shell 窗口）。
-// 样式按 HUD 的「消息通知条」复刻：斜纹装饰 + 警告图标 + 标题 + 高亮数值 + 关闭按钮。
+// 样式：左下角斜切、左侧斜纹、应用图标、标题 + 高亮数值 + 关闭按钮。
 Item {
     id: root
     width: 360
     implicitHeight: column.height + 12
 
     readonly property color accent: Appearance.accent("#FFFA00")
+    readonly property int cut: 14
 
     function highlight(text) {
         const escaped = String(text || "")
@@ -30,22 +31,46 @@ Item {
                 width: column.width
                 height: card.height
 
-                Rectangle {
+                // 卡片背景：左下角斜切
+                Canvas {
                     id: card
-                    anchors.fill: parent
+                    width: parent.width
                     height: Math.max(64, bodyColumn.height + 24)
-                    color: "#F21A1A1A"
-                    border.width: 1
-                    border.color: "#444444"
+                    onPaint: {
+                        const ctx = getContext("2d")
+                        ctx.reset()
+                        const cut = root.cut
+                        ctx.beginPath()
+                        ctx.moveTo(0, 0)
+                        ctx.lineTo(width, 0)
+                        ctx.lineTo(width, height)
+                        ctx.lineTo(cut, height)
+                        ctx.lineTo(0, height - cut)
+                        ctx.closePath()
+                        ctx.fillStyle = "#F21A1A1A"
+                        ctx.fill()
+                        ctx.strokeStyle = "#444444"
+                        ctx.lineWidth = 1
+                        ctx.stroke()
+                    }
+                    onHeightChanged: requestPaint()
                 }
 
-                // 左侧斜纹装饰
+                // 左侧斜纹装饰（同样按切角裁剪）
                 Canvas {
                     width: 16
                     height: card.height
                     onPaint: {
                         const ctx = getContext("2d")
                         ctx.reset()
+                        const cut = root.cut
+                        ctx.beginPath()
+                        ctx.moveTo(0, 0)
+                        ctx.lineTo(width, 0)
+                        ctx.lineTo(width, height)
+                        ctx.lineTo(0, height - cut)
+                        ctx.closePath()
+                        ctx.clip()
                         ctx.fillStyle = "#1A1A1A"
                         ctx.fillRect(0, 0, width, height)
                         ctx.strokeStyle = root.accent
@@ -60,32 +85,38 @@ Item {
                     onHeightChanged: requestPaint()
                 }
 
-                // 警告图标
-                Canvas {
+                // 应用图标；找不到时用应用名首字母兜底
+                Image {
                     x: 26
+                    width: 32; height: 32
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 24; height: 24
-                    onPaint: {
-                        const ctx = getContext("2d")
-                        ctx.reset()
-                        ctx.fillStyle = root.accent
-                        ctx.beginPath()
-                        ctx.moveTo(12, 2)
-                        ctx.lineTo(23, 21)
-                        ctx.lineTo(1, 21)
-                        ctx.closePath()
-                        ctx.fill()
-                        ctx.fillStyle = "#141414"
-                        ctx.fillRect(10.8, 9, 2.4, 7)
-                        ctx.fillRect(10.8, 17.5, 2.4, 2.2)
+                    source: (modelData.iconPath || "").length > 0 ? "file://" + modelData.iconPath : ""
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    visible: source !== "" && status === Image.Ready
+                }
+                Rectangle {
+                    x: 26
+                    width: 32; height: 32; radius: 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: root.accent
+                    visible: (modelData.iconPath || "").length === 0
+                    Text {
+                        anchors.centerIn: parent
+                        text: (modelData.appName || "?").charAt(0).toUpperCase()
+                        color: "#141414"
+                        font.family: harmonyBold.name
+                        font.pixelSize: 16
+                        font.weight: Font.Bold
+                        renderType: Text.CurveRendering
                     }
                 }
 
                 Column {
                     id: bodyColumn
-                    x: 60
+                    x: 68
                     y: 12
-                    width: card.width - 92
+                    width: card.width - 100
                     spacing: 3
 
                     Text {

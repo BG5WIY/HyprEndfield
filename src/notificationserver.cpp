@@ -2,6 +2,10 @@
 
 #include <QDBusConnection>
 #include <QDateTime>
+#include <QDir>
+#include <QIcon>
+#include <QPixmap>
+#include <QStandardPaths>
 #include <QVariantMap>
 
 namespace {
@@ -69,10 +73,29 @@ uint NotificationServer::add(const QString &appName, uint replacesId, const QStr
     const uint id = replacesId != 0 ? replacesId : m_nextId++;
     const int timeout = expireTimeout < 0 ? defaultTimeout : expireTimeout;
 
+    // 用通知的 app_icon（找不到时退回应用名）解析出图标文件给 QML 显示。
+    QString iconPath;
+    QString iconName = appIcon;
+    if (iconName.isEmpty()) iconName = appName.toLower();
+    if (iconName.endsWith(QLatin1String(".desktop"))) iconName.chop(8);
+    if (!iconName.isEmpty()) {
+        const QIcon icon = QIcon::fromTheme(iconName);
+        if (!icon.isNull()) {
+            const QString directory = QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+                                      + QStringLiteral("/notification-icons");
+            QDir().mkpath(directory);
+            const QString path = directory + QLatin1Char('/')
+                                 + QString(iconName).replace(QLatin1Char('/'), QLatin1Char('_')) + QStringLiteral(".png");
+            icon.pixmap(64, 64).save(path);
+            iconPath = path;
+        }
+    }
+
     const QVariantMap entry{
         {QStringLiteral("id"), id},
         {QStringLiteral("appName"), appName},
         {QStringLiteral("appIcon"), appIcon},
+        {QStringLiteral("iconPath"), iconPath},
         {QStringLiteral("summary"), summary},
         {QStringLiteral("body"), body},
         {QStringLiteral("actions"), actions},
