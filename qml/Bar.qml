@@ -1,13 +1,18 @@
 import QtQuick
 import "Appearance.js" as Appearance
 
-// 常驻顶部 bar：按 zmd-charge 的 HudAnimations 时间线复刻动画 pill。
-// 数据来自 HyprEndfield 自己的 activityController / batteryController，
-// 由 BarWindow 放进 wlr-layer-shell（top 层）窗口，不占工作区。
+// 常驻顶部 bar：按 zmd-charge 的动画顺序复刻。
+// 每个轮播项有自己的图标；图标先出现在中央，圆/圆环从图标扩散，
+// 图标移到左侧 25%，标题在圆环扫过中央时淡入。
 Item {
     id: bar
     width: parent ? parent.width : 600
     height: parent ? parent.height : 160
+
+    // Bar 是独立的 QQuickWindow，拿不到 Main.qml 里的 FontLoader，单独加载。
+    FontLoader { id: harmonyRegular; source: "qrc:/assets/fonts/HarmonyOS_Sans_Regular.ttf" }
+    FontLoader { id: harmonyMedium; source: "qrc:/assets/fonts/HarmonyOS_Sans_Medium.ttf" }
+    FontLoader { id: harmonyBold; source: "qrc:/assets/fonts/HarmonyOS_Sans_Bold.ttf" }
 
     readonly property var activity: activityController.state
     readonly property var latest: activity.latest || ({})
@@ -33,7 +38,6 @@ Item {
         for (let i = 0; i < count; ++i) out.push(raw[i])
         return out
     }
-    // barProfiles 的顺序就是轮播顺序。
     readonly property var profiles: {
         const list = enabledKeys.map(key => allProfiles.find(entry => entry.key === key)).filter(entry => !!entry)
         return list.length > 0 ? list : allProfiles
@@ -68,6 +72,14 @@ Item {
     property int clockTick: 0
     Timer { interval: 1000; running: true; repeat: true; onTriggered: bar.clockTick++ }
 
+    // 轮播定时器：间隔读设置项
+    Timer {
+        interval: Math.max(2, Number(settingsController.barInterval) || 6) * 1000
+        running: true
+        repeat: true
+        onTriggered: bar.advance()
+    }
+
     function valueFor(key, tick) {
         switch (key) {
         case "time":
@@ -77,11 +89,9 @@ Item {
             return { primary: rate(latest.read), secondary: qsTr("读"),
                      right: rate(latest.write), suffix: qsTr("写"), progress: 0 }
         case "download":
-            return { primary: rate(download), secondary: rateUnit(download),
-                     right: "", suffix: "", progress: 0 }
+            return { primary: rate(download), secondary: rateUnit(download), right: "", suffix: "", progress: 0 }
         case "upload":
-            return { primary: rate(upload), secondary: rateUnit(upload),
-                     right: "", suffix: "", progress: 0 }
+            return { primary: rate(upload), secondary: rateUnit(upload), right: "", suffix: "", progress: 0 }
         case "memory":
             return { primary: isNaN(memPercent) ? "--" : gigabyte(memUsed),
                      secondary: memTotal > 0 ? "/" + gigabyte(memTotal) + " GB" : "",
@@ -104,22 +114,25 @@ Item {
     }
     readonly property var value: valueFor(current.key, clockTick)
 
-    // ── 动画状态（时间线来自 zmd-charge HudAnimations，6s 基准） ────────
+    // ── 动画状态 ────────────────────────────────────────────────────────
     property real pillScale: 0.6
     property real pillOpacity: 0
     property real pillHeight: 60
     property real pillRadius: 30
-    property real iconX: 0
+    property real iconX: 0            // 0=中央，-140=左侧 25%，-245=最左
     property real iconScale: 0.4
     property real iconOpacity: 0
     property real circleOpacity: 0
     property real squareOpacity: 0
     property real titleOpacity: 0
     property real contentOpacity: 0
-    property real numberY: 8
     property real rippleScale: 0.15
     property real rippleOpacity: 0
     property bool animating: false
+
+    // 圆/圆环的圆心跟随图标
+    readonly property real iconCenterX: 280 + iconX
+    readonly property real iconCenterY: 28
 
     function advance() {
         if (animating || profiles.length === 0) return
@@ -137,71 +150,69 @@ Item {
         intro.start()
     }
 
-    // 首次出现：pill 从 0.6 弹到 1，然后进入一次完整切换。
     SequentialAnimation {
         id: intro
-        PauseAnimation { duration: 240 }
         ParallelAnimation {
             NumberAnimation { target: bar; property: "pillOpacity"; to: 1; duration: 180 }
             NumberAnimation { target: bar; property: "pillScale"; to: 1; duration: 320; easing.type: Easing.OutBack }
         }
-        ParallelAnimation {
-            NumberAnimation { target: bar; property: "iconOpacity"; to: 1; duration: 180 }
-            NumberAnimation { target: bar; property: "iconScale"; from: 0.4; to: 1.12; duration: 240; easing.type: Easing.OutBack }
-            NumberAnimation { target: bar; property: "circleOpacity"; to: 1; duration: 180 }
-        }
         ScriptAction { script: { bar.advance() } }
     }
 
-    // 每次轮播：展开（标题+波纹）→ 图标左移/变方形 → 收拢 → 内容进入。
+    // 原项目顺序：图标中央出现 → 图标+圆环左移并扩散 → 圆环扫过中央时标题淡入
+    // → 圆环到右 25% 淡化、图标到最左 → 内容出现。
     SequentialAnimation {
         id: cycle
-        // 先让旧内容淡出，再切到下一项，标题就不会先显示上一个名称。
-        ParallelAnimation {
-            NumberAnimation { target: bar; property: "contentOpacity"; to: 0; duration: 160 }
-            NumberAnimation { target: bar; property: "iconOpacity"; to: 0; duration: 160 }
-        }
         PropertyAction { target: bar; property: "index"; value: (bar.index + 1) % bar.profiles.length }
-        // 展开：图标立刻出现在中间，与标题一起
+        // A：旧内容淡出，图标/圆出现在中央
         ParallelAnimation {
-            NumberAnimation { target: bar; property: "titleOpacity"; to: 1; duration: 240; easing.type: Easing.OutCubic }
-            NumberAnimation { target: bar; property: "iconOpacity"; to: 1; duration: 120 }
-            NumberAnimation { target: bar; property: "iconX"; to: 0; duration: 260; easing.type: Easing.OutCubic }
-            NumberAnimation { target: bar; property: "iconScale"; to: 1; duration: 240; easing.type: Easing.OutBack }
-            NumberAnimation { target: bar; property: "circleOpacity"; to: 1; duration: 200 }
-            NumberAnimation { target: bar; property: "squareOpacity"; to: 0; duration: 200 }
-            NumberAnimation { target: bar; property: "pillHeight"; to: 90; duration: 320; easing.type: Easing.OutBack }
-            NumberAnimation { target: bar; property: "pillRadius"; to: 18; duration: 320; easing.type: Easing.InOutCubic }
-            ScriptAction { script: { ripple.restart() } }
+            NumberAnimation { target: bar; property: "contentOpacity"; to: 0; duration: 140 }
+            PropertyAction { target: bar; property: "iconX"; value: 0 }
+            PropertyAction { target: bar; property: "iconOpacity"; value: 0 }
+            PropertyAction { target: bar; property: "iconScale"; value: 0.5 }
+            PropertyAction { target: bar; property: "circleOpacity"; value: 1 }
+            PropertyAction { target: bar; property: "squareOpacity"; value: 0 }
+            PropertyAction { target: bar; property: "titleOpacity"; value: 0 }
+            PropertyAction { target: bar; property: "rippleScale"; value: 0.18 }
+            PropertyAction { target: bar; property: "rippleOpacity"; value: 0 }
+            NumberAnimation { target: bar; property: "pillHeight"; to: 90; duration: 260; easing.type: Easing.OutCubic }
+            NumberAnimation { target: bar; property: "pillRadius"; to: 18; duration: 260; easing.type: Easing.InOutCubic }
         }
-        PauseAnimation { duration: 240 }
-        // 收拢：图标移回左侧，标题淡出，新内容进入
+        // B：图标出现（中央）并开始左移；圆/圆环扩散
+        ParallelAnimation {
+            NumberAnimation { target: bar; property: "iconOpacity"; to: 1; duration: 120 }
+            NumberAnimation { target: bar; property: "iconScale"; to: 1; duration: 220; easing.type: Easing.OutBack }
+            NumberAnimation { target: bar; property: "rippleOpacity"; to: 0.5; duration: 160 }
+            NumberAnimation { target: bar; property: "iconX"; to: -140; duration: 900; easing.type: Easing.OutCubic }
+            // 扩散先快后慢，接近右端 25% 时几乎不动
+            NumberAnimation { target: bar; property: "rippleScale"; from: 0.18; to: 2.6; duration: 900; easing.type: Easing.OutCubic }
+            // 圆环扫过中央时标题缓慢淡入
+            SequentialAnimation {
+                PauseAnimation { duration: 420 }
+                NumberAnimation { target: bar; property: "titleOpacity"; to: 1; duration: 460; easing.type: Easing.InOutCubic }
+            }
+            // 接近右端 25% 时圆环淡化
+            SequentialAnimation {
+                PauseAnimation { duration: 720 }
+                NumberAnimation { target: bar; property: "rippleOpacity"; to: 0; duration: 180 }
+            }
+        }
+        // C：图标继续移到最左，圆变方
+        ParallelAnimation {
+            NumberAnimation { target: bar; property: "iconX"; to: -245; duration: 240; easing.type: Easing.OutCubic }
+            NumberAnimation { target: bar; property: "iconScale"; to: 0.56; duration: 240; easing.type: Easing.InOutCubic }
+            NumberAnimation { target: bar; property: "circleOpacity"; to: 0; duration: 180 }
+            NumberAnimation { target: bar; property: "squareOpacity"; to: 1; duration: 180 }
+        }
+        // D：标题淡出，内容进入，pill 收回
         ParallelAnimation {
             NumberAnimation { target: bar; property: "titleOpacity"; to: 0; duration: 200 }
-            NumberAnimation { target: bar; property: "iconX"; to: -245; duration: 340; easing.type: Easing.OutCubic }
-            NumberAnimation { target: bar; property: "iconOpacity"; to: 1; duration: 240 }
-            NumberAnimation { target: bar; property: "iconScale"; to: 0.56; duration: 320; easing.type: Easing.InOutCubic }
-            NumberAnimation { target: bar; property: "circleOpacity"; to: 0; duration: 220 }
-            NumberAnimation { target: bar; property: "squareOpacity"; to: 1; duration: 220 }
-            NumberAnimation { target: bar; property: "contentOpacity"; to: 1; duration: 280; easing.type: Easing.OutCubic }
-            NumberAnimation { target: bar; property: "pillHeight"; to: 60; duration: 340; easing.type: Easing.InOutCubic }
-            NumberAnimation { target: bar; property: "pillRadius"; to: 30; duration: 340; easing.type: Easing.InOutCubic }
+            NumberAnimation { target: bar; property: "contentOpacity"; to: 1; duration: 260; easing.type: Easing.OutCubic }
+            NumberAnimation { target: bar; property: "pillHeight"; to: 60; duration: 300; easing.type: Easing.InOutCubic }
+            NumberAnimation { target: bar; property: "pillRadius"; to: 30; duration: 300; easing.type: Easing.InOutCubic }
         }
-        PauseAnimation { duration: 3600 }
+        PauseAnimation { duration: 3200 }
         ScriptAction { script: { bar.animating = false } }
-    }
-
-    ParallelAnimation {
-        id: ripple
-        NumberAnimation { target: bar; property: "rippleScale"; from: 0.15; to: 1; duration: 780; easing.type: Easing.OutCubic }
-        NumberAnimation { target: bar; property: "rippleOpacity"; from: 0.55; to: 0; duration: 780; easing.type: Easing.OutCubic }
-    }
-
-    Timer {
-        interval: Math.max(2, Number(settingsController.barInterval) || 6) * 1000
-        running: true
-        repeat: true
-        onTriggered: bar.advance()
     }
 
     // ── 视觉 ────────────────────────────────────────────────────────────
@@ -213,8 +224,6 @@ Item {
         height: 100
         scale: bar.pillScale * (Number(settingsController.barScale) || 1)
         opacity: bar.pillOpacity
-        // 以顶部为原点缩放：pill 顶部始终距屏幕 14，缩放大小时底部间距
-        // 由 exclusive zone 同步保持 14。
         transformOrigin: Item.Top
 
         Rectangle {
@@ -228,10 +237,11 @@ Item {
             clip: true
         }
 
-        // 波纹：内实心 / 中环 / 外环
+        // 圆 + 两个圆环：圆心跟随图标，只在 bar 内显示（pill 裁剪）
         Item {
-            anchors.centerIn: pill
             width: 1; height: 1
+            x: bar.iconCenterX
+            y: bar.iconCenterY
             scale: bar.rippleScale
             opacity: bar.rippleOpacity
             Rectangle { width: 160; height: 160; radius: 80; anchors.centerIn: parent; color: "#656363" }
@@ -239,10 +249,10 @@ Item {
             Rectangle { width: 280; height: 280; radius: 140; anchors.centerIn: parent; color: "transparent"; border.width: 3.5; border.color: "#656363" }
         }
 
-        // 展开时的标题（tagline + title）
+        // 标题（圆环扫过中央时淡入）
         Column {
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: 54
+            anchors.centerIn: pill
+            y: 2
             spacing: 1
             opacity: bar.titleOpacity
             Text {
@@ -261,7 +271,7 @@ Item {
             }
         }
 
-        // 图标：中心（圆）↔ 左侧（方）
+        // 图标：每项独立图形
         Item {
             id: icon
             width: 32; height: 32
@@ -269,36 +279,112 @@ Item {
             y: 12
             scale: bar.iconScale
             opacity: bar.iconOpacity
-            Rectangle {
-                anchors.fill: parent; radius: 16
-                color: "#E9E7E4"; opacity: bar.circleOpacity
-            }
-            Rectangle {
-                width: 18; height: 18; radius: 4.5
-                anchors.centerIn: parent
-                color: "#E9E7E4"; opacity: bar.squareOpacity
-            }
+            Rectangle { anchors.fill: parent; radius: 16; color: "#E9E7E4"; opacity: bar.circleOpacity }
+            Rectangle { width: 18; height: 18; radius: 4.5; anchors.centerIn: parent; color: "#E9E7E4"; opacity: bar.squareOpacity }
             Canvas {
                 anchors.fill: parent
-                opacity: Math.max(bar.circleOpacity, bar.squareOpacity)
+                property string glyph: bar.current.key
+                onGlyphChanged: requestPaint()
                 onPaint: {
                     const ctx = getContext("2d")
                     ctx.clearRect(0, 0, width, height)
                     ctx.fillStyle = "#141313"
-                    ctx.beginPath()
-                    ctx.moveTo(19, 6); ctx.lineTo(10, 18); ctx.lineTo(15, 18)
-                    ctx.lineTo(12, 27); ctx.lineTo(23, 14); ctx.lineTo(17, 14)
-                    ctx.closePath(); ctx.fill()
+                    ctx.strokeStyle = "#141313"
+                    ctx.lineWidth = 2
+                    ctx.lineCap = "round"
+                    const c = 16
+                    switch (glyph) {
+                    case "cpu":
+                        ctx.fillRect(10, 10, 12, 12)
+                        ctx.beginPath()
+                        for (let i = 0; i < 3; ++i) {
+                            const p = 11 + i * 5
+                            ctx.moveTo(p, 10); ctx.lineTo(p, 5)
+                            ctx.moveTo(p, 22); ctx.lineTo(p, 27)
+                            ctx.moveTo(10, p); ctx.lineTo(5, p)
+                            ctx.moveTo(22, p); ctx.lineTo(27, p)
+                        }
+                        ctx.stroke()
+                        break
+                    case "memory":
+                        ctx.strokeRect(6, 11, 20, 10)
+                        ctx.fillRect(8, 13, 2, 6)
+                        ctx.fillRect(12, 13, 2, 6)
+                        ctx.fillRect(16, 13, 2, 6)
+                        ctx.fillRect(20, 13, 2, 6)
+                        break
+                    case "battery":
+                        ctx.strokeRect(6, 10, 16, 12)
+                        ctx.fillRect(22, 14, 2, 4)
+                        ctx.fillRect(9, 13, 8, 6)
+                        break
+                    case "network":
+                        ctx.beginPath()
+                        ctx.arc(c, 24, 9, Math.PI * 1.15, Math.PI * 1.85)
+                        ctx.stroke()
+                        ctx.beginPath()
+                        ctx.arc(c, 24, 14, Math.PI * 1.2, Math.PI * 1.8)
+                        ctx.stroke()
+                        ctx.beginPath()
+                        ctx.arc(c, 24, 19, Math.PI * 1.25, Math.PI * 1.75)
+                        ctx.stroke()
+                        ctx.fillRect(c - 1.5, 12, 3, 3)
+                        break
+                    case "gpu":
+                        ctx.strokeRect(7, 10, 18, 12)
+                        ctx.fillRect(11, 14, 6, 4)
+                        ctx.fillRect(19, 14, 3, 4)
+                        ctx.beginPath()
+                        ctx.moveTo(10, 22); ctx.lineTo(10, 26)
+                        ctx.moveTo(16, 22); ctx.lineTo(16, 26)
+                        ctx.moveTo(22, 22); ctx.lineTo(22, 26)
+                        ctx.stroke()
+                        break
+                    case "disk":
+                        ctx.strokeRect(6, 9, 20, 14)
+                        ctx.fillRect(9, 12, 14, 3)
+                        ctx.beginPath()
+                        ctx.arc(21, 20, 1.6, 0, Math.PI * 2)
+                        ctx.fill()
+                        break
+                    case "download":
+                        ctx.beginPath()
+                        ctx.moveTo(16, 6); ctx.lineTo(16, 20)
+                        ctx.moveTo(10, 14); ctx.lineTo(16, 20); ctx.lineTo(22, 14)
+                        ctx.stroke()
+                        ctx.fillRect(9, 24, 14, 2)
+                        break
+                    case "upload":
+                        ctx.beginPath()
+                        ctx.moveTo(16, 20); ctx.lineTo(16, 6)
+                        ctx.moveTo(10, 12); ctx.lineTo(16, 6); ctx.lineTo(22, 12)
+                        ctx.stroke()
+                        ctx.fillRect(9, 24, 14, 2)
+                        break
+                    case "time":
+                        ctx.beginPath()
+                        ctx.arc(c, c, 11, 0, Math.PI * 2)
+                        ctx.stroke()
+                        ctx.beginPath()
+                        ctx.moveTo(c, c); ctx.lineTo(c, c - 6)
+                        ctx.moveTo(c, c); ctx.lineTo(c + 5, c + 2)
+                        ctx.stroke()
+                        break
+                    default:
+                        ctx.beginPath()
+                        ctx.moveTo(19, 6); ctx.lineTo(10, 18); ctx.lineTo(15, 18)
+                        ctx.lineTo(12, 27); ctx.lineTo(23, 14); ctx.lineTo(17, 14)
+                        ctx.closePath(); ctx.fill()
+                    }
                 }
             }
         }
 
-        // 收缩态内容：主值、副值、右侧值、徽章
+        // 收缩态内容
         Item {
             id: content
             anchors.fill: pill
             opacity: bar.contentOpacity
-            y: bar.numberY
 
             Row {
                 x: 64
