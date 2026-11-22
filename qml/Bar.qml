@@ -162,10 +162,11 @@ Item {
             NumberAnimation { target: bar; property: "iconOpacity"; to: 0; duration: 160 }
         }
         PropertyAction { target: bar; property: "index"; value: (bar.index + 1) % bar.profiles.length }
-        // 展开：图标回到中间，标题显示的是即将轮播到的这一项
+        // 展开：图标立刻出现在中间，与标题一起
         ParallelAnimation {
             NumberAnimation { target: bar; property: "titleOpacity"; to: 1; duration: 240; easing.type: Easing.OutCubic }
-            NumberAnimation { target: bar; property: "iconX"; to: 0; duration: 280; easing.type: Easing.OutCubic }
+            NumberAnimation { target: bar; property: "iconOpacity"; to: 1; duration: 120 }
+            NumberAnimation { target: bar; property: "iconX"; to: 0; duration: 260; easing.type: Easing.OutCubic }
             NumberAnimation { target: bar; property: "iconScale"; to: 1; duration: 240; easing.type: Easing.OutBack }
             NumberAnimation { target: bar; property: "circleOpacity"; to: 1; duration: 200 }
             NumberAnimation { target: bar; property: "squareOpacity"; to: 0; duration: 200 }
