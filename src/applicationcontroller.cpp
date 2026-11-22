@@ -246,6 +246,26 @@ void ApplicationController::executeCommand(const QString &command)
     }
 }
 
+void ApplicationController::launchKittyTerminal()
+{
+    if (m_terminal) return;
+    const bool reopen = hudVisible();
+    hideHud();
+    auto *process = new QProcess(this);
+    m_terminal = process;
+    const auto finish = [this, process, reopen] {
+        process->deleteLater();
+        m_terminal = nullptr;
+        if (reopen) showHud();
+    };
+    connect(process, &QProcess::finished, this, [finish](int, QProcess::ExitStatus) { finish(); });
+    connect(process, &QProcess::errorOccurred, this, [finish](QProcess::ProcessError error) {
+        if (error == QProcess::FailedToStart) finish();
+    });
+    process->start(QStringLiteral("kitty"), {QStringLiteral("--class"), QStringLiteral("hyprendfield-terminal"),
+                                             QStringLiteral("--title"), QStringLiteral("HyprEndfield Terminal")});
+}
+
 void ApplicationController::showHud()
 {
     if (m_fileDragActive) return;
