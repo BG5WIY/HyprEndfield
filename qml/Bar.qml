@@ -203,7 +203,9 @@ Item {
         height: 100
         scale: bar.pillScale * (Number(settingsController.barScale) || 1)
         opacity: bar.pillOpacity
-        transformOrigin: Item.Center
+        // 以顶部为原点缩放：pill 顶部始终距屏幕 14，缩放大小时底部间距
+        // 由 exclusive zone 同步保持 14。
+        transformOrigin: Item.Top
 
         Rectangle {
             id: pill
