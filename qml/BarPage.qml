@@ -135,10 +135,17 @@ Item {
                             color: active ? Appearance.tone("#EDEDED") : Appearance.tone("#8A8A8A")
                             font.family: harmonyMedium.name; font.pixelSize: 12; renderType: Text.CurveRendering
                         }
+                        // 整行都能切换显示；箭头按钮声明在后面（上层），优先响应。
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: barPage.setProfile(modelData.key, !barPage.profileEnabled(modelData.key))
+                        }
                         Item {
                             anchors.right: parent.right; anchors.rightMargin: 78
                             anchors.verticalCenter: parent.verticalCenter
                             width: 21; height: 21
+                            z: 2
                             Rectangle { anchors.fill: parent; color: upHover.hovered ? "#3A3A3A" : "#262626" }
                             Text { anchors.centerIn: parent; text: "↑"; color: Appearance.tone("#C9C9C9"); font.pixelSize: 11 }
                             HoverHandler { id: upHover }
@@ -148,6 +155,7 @@ Item {
                             anchors.right: parent.right; anchors.rightMargin: 50
                             anchors.verticalCenter: parent.verticalCenter
                             width: 21; height: 21
+                            z: 2
                             Rectangle { anchors.fill: parent; color: downHover.hovered ? "#3A3A3A" : "#262626" }
                             Text { anchors.centerIn: parent; text: "↓"; color: Appearance.tone("#C9C9C9"); font.pixelSize: 11 }
                             HoverHandler { id: downHover }
@@ -165,11 +173,6 @@ Item {
                             }
                         }
                         HoverHandler { id: hover }
-                        MouseArea {
-                            anchors.fill: parent; anchors.rightMargin: 108
-                            hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                            onClicked: barPage.setProfile(modelData.key, !barPage.profileEnabled(modelData.key))
-                        }
                     }
                 }
             }
