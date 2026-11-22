@@ -187,6 +187,7 @@ qt_add_qml_module(hyprendfield
         qml/CalendarPage.qml
         qml/WallpaperPage.qml
         qml/Bar.qml
+        qml/BarGlyph.qml
         qml/BarPage.qml
         qml/CalendarFormat.js
         qml/CalendarButton.qml
