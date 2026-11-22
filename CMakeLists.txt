@@ -105,6 +105,8 @@ qt_add_executable(hyprendfield
     src/audiocontroller.cpp
     src/audiocontroller.hpp
     src/terminalsession.cpp
+    src/notificationserver.cpp
+    src/notificationwindow.cpp
     src/terminalsession.hpp
     src/terminalview.cpp
     src/terminalview.hpp
@@ -156,6 +158,7 @@ qt_add_qml_module(hyprendfield
         qml/DisplayExtras.qml
         qml/ClockInstrument.qml
         qml/BatteryAlertWindow.qml
+        qml/NotificationWindow.qml
         qml/Appearance.js
         qml/ModuleNumbering.js
         qml/Redaction.qml
