@@ -162,9 +162,10 @@ Item {
             NumberAnimation { target: bar; property: "iconOpacity"; to: 0; duration: 160 }
         }
         PropertyAction { target: bar; property: "index"; value: (bar.index + 1) % bar.profiles.length }
-        // 展开：标题显示的是即将轮播到的这一项
+        // 展开：图标回到中间，标题显示的是即将轮播到的这一项
         ParallelAnimation {
             NumberAnimation { target: bar; property: "titleOpacity"; to: 1; duration: 240; easing.type: Easing.OutCubic }
+            NumberAnimation { target: bar; property: "iconX"; to: 0; duration: 280; easing.type: Easing.OutCubic }
             NumberAnimation { target: bar; property: "iconScale"; to: 1; duration: 240; easing.type: Easing.OutBack }
             NumberAnimation { target: bar; property: "circleOpacity"; to: 1; duration: 200 }
             NumberAnimation { target: bar; property: "squareOpacity"; to: 0; duration: 200 }
@@ -173,9 +174,10 @@ Item {
             ScriptAction { script: { ripple.restart() } }
         }
         PauseAnimation { duration: 240 }
-        // 收拢：标题淡出，新内容进入
+        // 收拢：图标移回左侧，标题淡出，新内容进入
         ParallelAnimation {
             NumberAnimation { target: bar; property: "titleOpacity"; to: 0; duration: 200 }
+            NumberAnimation { target: bar; property: "iconX"; to: -245; duration: 340; easing.type: Easing.OutCubic }
             NumberAnimation { target: bar; property: "iconOpacity"; to: 1; duration: 240 }
             NumberAnimation { target: bar; property: "iconScale"; to: 0.56; duration: 320; easing.type: Easing.InOutCubic }
             NumberAnimation { target: bar; property: "circleOpacity"; to: 0; duration: 220 }
