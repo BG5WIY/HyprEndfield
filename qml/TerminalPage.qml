@@ -64,61 +64,22 @@ Item {
     Rectangle {
         x: 0; y: 81; width: 590; height: 399
         color: Appearance.tone("#171717"); border.color: Appearance.tone("#3A3A3A"); border.width: 1
-
-        Column {
-            anchors.centerIn: parent
-            spacing: 16
-
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "KITTY"
-                color: Appearance.tone("#F4F4F4")
-                font.family: harmonyBold.name; font.pixelSize: 36; font.weight: Font.Bold; font.letterSpacing: 8
-                renderType: Text.CurveRendering
-            }
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: qsTr("在屏幕中央打开独立 Kitty 窗口")
-                color: Appearance.tone("#8A8A8A")
-                font.family: harmonyRegular.name; font.pixelSize: 12
-                renderType: Text.CurveRendering
-            }
-            Rectangle {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: 220; height: 48
-                color: launchHover.hovered ? Appearance.accent("#FFFA00") : Appearance.tone("#242424")
-                border.width: 1
-                border.color: launchHover.hovered ? Appearance.accent("#FFFA00") : Appearance.tone("#3A3A3A")
-                Text {
-                    anchors.centerIn: parent
-                    text: qsTr("启动终端")
-                    color: launchHover.hovered ? "#111111" : Appearance.tone("#EDEDED")
-                    font.family: harmonyBold.name; font.pixelSize: 14; font.letterSpacing: 2
-                    renderType: Text.CurveRendering
-                }
-                HoverHandler { id: launchHover }
-                MouseArea {
-                    anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                    onClicked: appController.launchKittyTerminal()
-                }
-            }
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: qsTr("HUD 会暂时收起，退出终端后自动恢复")
-                color: Appearance.tone("#6E6E6E")
-                font.family: harmonyRegular.name; font.pixelSize: 10
-                renderType: Text.CurveRendering
-            }
+        TerminalView {
+            id: terminal; objectName: "terminalView"
+            anchors.fill: parent; anchors.margins: 12
+            session: terminalSession
+            renderScale: page.rasterScale
+            enabled: page.presented
         }
     }
     Text {
         x: 0; y: 492; width: 290; elide: Text.ElideRight
-        text: qsTr("Kitty · 复用你的终端配置"); color: Appearance.tone("#8A8A8A")
+        text: terminalSession.status || "BASH"; color: Appearance.tone("#8A8A8A")
         font.family: harmonyRegular.name; font.pixelSize: 10; renderType: Text.CurveRendering
     }
     Text {
         x: 296; y: 492; width: 294; horizontalAlignment: Text.AlignRight
-        text: "SUPER+ESC"; color: Appearance.tone("#8A8A8A")
+        text: qsTr("Ctrl+Shift+C / V  复制 / 粘贴"); color: Appearance.tone("#8A8A8A")
         font.family: harmonyRegular.name; font.pixelSize: 10; renderType: Text.CurveRendering
     }
 }
