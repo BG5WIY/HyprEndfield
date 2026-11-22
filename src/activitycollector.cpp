@@ -194,8 +194,20 @@ Reading Collector::sample(bool applications) {
             result.disks[name] = {value->first * 512, value->second * 512};
     }
     for (const auto &card : QDir(m_paths.sys + "/class/drm").entryList({"card*"}, QDir::Dirs)) {
+        GpuCard gpu;
+        gpu.index = card.mid(4).toInt();
         bool ok; const auto busy = read(m_paths.sys + "/class/drm/" + card + "/device/gpu_busy_percent").trimmed().toDouble(&ok);
-        if (ok && busy >= 0 && busy <= 100) result.gpu = std::max(result.gpu.value_or(0), busy);
+        if (ok && busy >= 0 && busy <= 100) gpu.busy = busy;
+        // 当前频率在 pp_dpm_sclk 里用 * 标出（优先独显，核显可能没有该节点）。
+        const auto sclk = read(m_paths.sys + "/class/drm/" + card + "/device/pp_dpm_sclk");
+        for (const auto &line : sclk.split('\n')) {
+            if (!line.contains('*')) continue;
+            const auto after = line.mid(line.indexOf(':') + 1).trimmed();
+            bool freqOk; const auto value = after.left(after.indexOf('M')).trimmed().toDouble(&freqOk);
+            if (freqOk) { gpu.freqMhz = value; break; }
+        }
+        if (gpu.busy >= 0) result.gpu = std::max(result.gpu.value_or(0), gpu.busy);
+        result.gpuCards.append(gpu);
     }
     if (m_paths.helpers) {
         const auto output = query(QStandardPaths::findExecutable("nvidia-smi"),
@@ -311,6 +323,20 @@ void Collector::collectApplications(Reading &reading) {
     }
 }
 
+double cpuMhz() {
+    QFile file(QStringLiteral("/proc/cpuinfo"));
+    if (!file.open(QIODevice::ReadOnly)) return 0;
+    // /proc 文件的 stat size 为 0，不能用 atEnd()/readLine() 循环。
+    const QByteArray data = file.readAll();
+    double sum = 0; int count = 0;
+    for (const auto &line : data.split('\n')) {
+        if (!line.startsWith("cpu MHz")) continue;
+        const auto value = line.mid(line.indexOf(':') + 1).trimmed().toDouble();
+        if (value > 0) { sum += value; ++count; }
+    }
+    return count > 0 ? sum / count : 0;
+}
+
 QVariantMap derive(const Reading &now, const Reading *previous) {
     const double elapsed = previous ? now.seconds - previous->seconds : 0;
     std::optional<double> cpu;
@@ -320,7 +346,10 @@ QVariantMap derive(const Reading &now, const Reading *previous) {
     }
     const auto network = previous ? rates(now.network, previous->network, elapsed) : QList<QVariant>{{}, {}};
     const auto disks = previous ? rates(now.disks, previous->disks, elapsed) : QList<QVariant>{{}, {}};
-    return {{"gpu", number(now.gpu)}, {"cpu", number(cpu)}, {"memoryUsed", number(now.memoryUsed)}, {"memoryTotal", number(now.memoryTotal)},
+    QVariantList gpuCards;
+    for (const auto &card : now.gpuCards)
+        gpuCards.append(QVariantMap{{"index", card.index}, {"busy", card.busy}, {"freqMhz", card.freqMhz}});
+    return {{"gpu", number(now.gpu)}, {"gpuCards", gpuCards}, {"cpu", number(cpu)}, {"cpuMhz", cpuMhz()}, {"memoryUsed", number(now.memoryUsed)}, {"memoryTotal", number(now.memoryTotal)},
         {"upload", network[0]}, {"download", network[1]}, {"read", disks[0]}, {"write", disks[1]}};
 }
 QVariantList deriveApps(const Reading &now, const Reading *previous) {

@@ -73,7 +73,7 @@ const QStringList accents{"#FAD41F", "#6EDFE8", "#A8E58B", "#C9A2FF", "#FF8F78"}
 }
 
 QStringList SettingsController::defaultModules() {
-    return {"notes", "fileShelf", "clipboard", "archive", "nowPlaying", "volume", "reader", "workMode", "calendar", "projection", "mediaAssembly", "minigame", "eventLog", "account"};
+    return {"notes", "fileShelf", "clipboard", "archive", "nowPlaying", "volume", "reader", "workMode", "calendar", "wallpaper", "bar", "projection", "mediaAssembly", "minigame", "eventLog", "account"};
 }
 
 SettingsController::SettingsController(QObject *parent, QString preferences, QString autostart, QString data)
@@ -90,7 +90,11 @@ SettingsController::SettingsController(QObject *parent, QString preferences, QSt
         {"languageIndex", 0}, {"launchAtLogin", false}, {"closeOnFocusLost", false}, {"displayChoice", "pointer"}, {"soundVolume", 50},
         {"moduleOrder", defaultModules()}, {"hiddenModules", QStringList{}},
         {"batteryMethod", 0}, {"batteryDuration", 10.0}, {"batteryPlacement", 0}, {"batteryScale", 1.0},
-        {"batteryX", .5}, {"batteryY", .12}, {"batteryMetric", 0}};
+        {"batteryX", .5}, {"batteryY", .12}, {"batteryMetric", 0},
+        {"wallpaperBackend", "wallpaperengine"}, {"wallpaperCommand", ""},
+        {"barEnabled", true},
+        {"gpuSource", -1}, {"barInterval", 6}, {"barAnimation", true}, {"barScale", 1.0},
+        {"barProfiles", QStringList{"cpu", "memory", "battery", "network", "gpu"}}};
     QFile manifest(":/assets/settings/application-icons/manifest.json");
     if (manifest.open(QIODevice::ReadOnly)) {
         const auto entries = QJsonDocument::fromJson(manifest.readAll()).object()["icons"].toArray();
@@ -132,7 +136,7 @@ QVariant SettingsController::normalized(const QString &key, const QVariant &inpu
         {"parallaxIntensity", {0, 2}}, {"perspectiveIntensity", {0, 2}}, {"backgroundBrightness", {0, 1}}, {"blurAmount", {0, 1}},
         {"themeIndex", {0, 2}}, {"clockStyleIndex", {0, 4}}, {"centerLogoIndex", {0, 4}}, {"accentIndex", {0, 5}},
         {"languageIndex", {0, 5}}, {"soundVolume", {0, 100}}, {"batteryMethod", {0, 2}}, {"batteryDuration", {1, 60}}, {"batteryPlacement", {0, 1}},
-        {"batteryScale", {.65, 1.6}}, {"batteryX", {0, 1}}, {"batteryY", {0, 1}}, {"batteryMetric", {0, 5}}};
+        {"gpuSource", std::pair<double, double>(-1, 8)}, {"batteryScale", {.65, 1.6}}, {"batteryX", {0, 1}}, {"batteryY", {0, 1}}, {"batteryMetric", {0, 5}}};
     if (ranges.contains(key)) {
         bool ok = false; double v = input.toDouble(&ok);
         if (!ok || !std::isfinite(v)) return m_defaults.value(key);
@@ -140,6 +144,12 @@ QVariant SettingsController::normalized(const QString &key, const QVariant &inpu
         return m_defaults.value(key).metaType().id() == QMetaType::Int ? QVariant(qRound(v)) : QVariant(v);
     }
     if (m_defaults.value(key).metaType().id() == QMetaType::Bool) return input.toBool();
+    if (key == "barProfiles") {
+        // 轮播项是字符串列表，不能落到下面的 toString() 分支。
+        QStringList out;
+        for (const auto &v : input.toStringList()) if (!out.contains(v)) out.append(v);
+        return out.isEmpty() ? m_defaults.value(key) : QVariant(out);
+    }
     if (key == "moduleOrder" || key == "hiddenModules") {
         QStringList out;
         for (const auto &v : input.toStringList()) if (defaultModules().contains(v) && !out.contains(v)) out.append(v);

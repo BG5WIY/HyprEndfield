@@ -8,6 +8,8 @@
 #include "orbipomcontroller.hpp"
 #include "eventlogcontroller.hpp"
 #include "appshortcutscontroller.hpp"
+#include "wallpapercontroller.hpp"
+#include "barwindow.hpp"
 #include "projectioncanvas.hpp"
 #include "mediaeditor.hpp"
 #include "centerlogo.hpp"
@@ -21,6 +23,8 @@
 #include "splayerlyrics.hpp"
 #include "audiocontroller.hpp"
 #include "terminalsession.hpp"
+#include "notificationserver.hpp"
+#include "notificationwindow.hpp"
 #include "terminalview.hpp"
 #include "activitycontroller.hpp"
 #include "calendarcontroller.hpp"
@@ -255,6 +259,8 @@ int main(int argc, char *argv[])
     SPlayerLyrics lyrics(&nowPlaying);
     AudioController audio;
     TerminalSession terminal;
+    NotificationServer notificationServer;
+    notificationServer.registerService();
     ActivityController activity;
     FacilityController facility;
     facility.setEnabled(settings.value("facilityAlerts").toBool());
@@ -286,6 +292,7 @@ int main(int argc, char *argv[])
     EventLogController eventLog;
     QObject::connect(&account, &AccountController::eventOccurred, &eventLog, [&](const QString &action) { eventLog.recordAction("accountAction", action); });
     QObject::connect(&gameProfile, &ProfileController::cropChanged, &eventLog, [&](const QString &target) { eventLog.record("profileCropChanged", {{"target", target}}); });
+    WallpaperController wallpaper;
     AppShortcutsController appShortcuts;
     QObject::connect(&settings, &SettingsController::languageChanged, &appShortcuts, &AppShortcutsController::changed);
     QObject::connect(&appShortcuts, &AppShortcutsController::launchRequested, &controller, [&] {
@@ -359,6 +366,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("splayerLyrics"), &lyrics);
     engine.rootContext()->setContextProperty(QStringLiteral("audioController"), &audio);
     engine.rootContext()->setContextProperty(QStringLiteral("terminalSession"), &terminal);
+    engine.rootContext()->setContextProperty(QStringLiteral("notificationServer"), &notificationServer);
     engine.rootContext()->setContextProperty(QStringLiteral("activityController"), &activity);
     engine.rootContext()->setContextProperty(QStringLiteral("calendarController"), &calendar);
     engine.rootContext()->setContextProperty(QStringLiteral("focusModeController"), &focusMode);
@@ -371,6 +379,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("orbipomController"), &orbipom);
     engine.rootContext()->setContextProperty(QStringLiteral("eventLogController"), &eventLog);
     engine.rootContext()->setContextProperty(QStringLiteral("appShortcutsController"), &appShortcuts);
+    engine.rootContext()->setContextProperty(QStringLiteral("wallpaperController"), &wallpaper);
     engine.addImageProvider(QStringLiteral("shortcut-icons"), new ShortcutIconProvider(&appShortcuts));
     engine.rootContext()->setContextProperty(QStringLiteral("fileShelfController"), &fileShelf);
     engine.rootContext()->setContextProperty(QStringLiteral("archiveController"), &archive);
@@ -385,6 +394,15 @@ int main(int argc, char *argv[])
     if (engine.rootObjects().isEmpty()) {
         return 1;
     }
+
+    // 常驻顶部 bar（layer-shell top 层）。数据和动画都在 Bar.qml 里。
+    BarWindow bar(&engine, &settings);
+    NotificationWindow notifications(&engine, &notificationServer);
+    bar.setEnabled(settings.value(QStringLiteral("barEnabled")).toBool());
+    QObject::connect(&settings, &SettingsController::preferenceChanged, &bar,
+                     [&bar](const QString &key, const QVariant &value) {
+                         if (key == QLatin1String("barEnabled")) bar.setEnabled(value.toBool());
+                     });
 
     auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
     if (!window) {

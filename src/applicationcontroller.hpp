@@ -6,6 +6,7 @@
 #include <QTimer>
 
 class QLocalServer;
+class QProcess;
 class QQuickWindow;
 class SettingsController;
 
@@ -35,6 +36,8 @@ public:
     void executeCommand(const QString &command);
     QString layerScope() const;
     Q_INVOKABLE void setProjectionActive(bool active);
+    // 收起 HUD，在屏幕中央弹出一个独立的 kitty 窗口，退出后恢复 HUD。
+    Q_INVOKABLE void launchKittyTerminal();
 
 public slots:
     void showHud();
@@ -54,6 +57,7 @@ private slots:
     void acceptConnection();
 
 private:
+    QPointer<QProcess> m_terminal;
     void activateCompositorMode();
     void resetCompositorMode();
     void setHudVisible(bool visible);
