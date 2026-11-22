@@ -143,6 +143,12 @@ QVariant SettingsController::normalized(const QString &key, const QVariant &inpu
         return m_defaults.value(key).metaType().id() == QMetaType::Int ? QVariant(qRound(v)) : QVariant(v);
     }
     if (m_defaults.value(key).metaType().id() == QMetaType::Bool) return input.toBool();
+    if (key == "barProfiles") {
+        // 轮播项是字符串列表，不能落到下面的 toString() 分支。
+        QStringList out;
+        for (const auto &v : input.toStringList()) if (!out.contains(v)) out.append(v);
+        return out.isEmpty() ? m_defaults.value(key) : QVariant(out);
+    }
     if (key == "moduleOrder" || key == "hiddenModules") {
         QStringList out;
         for (const auto &v : input.toStringList()) if (defaultModules().contains(v) && !out.contains(v)) out.append(v);

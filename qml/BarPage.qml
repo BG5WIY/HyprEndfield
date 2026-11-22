@@ -22,12 +22,15 @@ Item {
         { key: "time", label: qsTr("时间") }
     ]
 
+    function barProfileList() {
+        const raw = settingsController.barProfiles
+        return Array.isArray(raw) ? raw.slice() : []
+    }
     function profileEnabled(key) {
-        const list = settingsController.barProfiles || []
-        return list.indexOf(key) >= 0
+        return barProfileList().indexOf(key) >= 0
     }
     function setProfile(key, on) {
-        const list = (settingsController.barProfiles || []).slice()
+        const list = barProfileList()
         const index = list.indexOf(key)
         if (on && index < 0) list.push(key)
         if (!on && index >= 0) list.splice(index, 1)
@@ -36,7 +39,7 @@ Item {
         settingsController.set("barProfiles", list)
     }
     function moveProfile(key, delta) {
-        const list = (settingsController.barProfiles || []).slice()
+        const list = barProfileList()
         const index = list.indexOf(key)
         if (index < 0) return
         const target = Math.max(0, Math.min(list.length - 1, index + delta))

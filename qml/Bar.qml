@@ -24,7 +24,10 @@ Item {
         { key: "upload", title: qsTr("上传"), tag: "/// UPLOAD" },
         { key: "time", title: qsTr("时间"), tag: "/// CLOCK" }
     ]
-    readonly property var enabledKeys: settingsController.barProfiles || []
+    readonly property var enabledKeys: {
+        const raw = settingsController.barProfiles
+        return Array.isArray(raw) ? raw : []
+    }
     // barProfiles 的顺序就是轮播顺序。
     readonly property var profiles: {
         const list = enabledKeys.map(key => allProfiles.find(entry => entry.key === key)).filter(entry => !!entry)
