@@ -132,7 +132,7 @@ Item {
 
     // 圆/圆环的圆心跟随图标
     readonly property real iconCenterX: 280 + iconX
-    readonly property real iconCenterY: 28
+    readonly property real iconCenterY: 30
 
     function advance() {
         if (animating || profiles.length === 0) return
@@ -230,7 +230,8 @@ Item {
         Rectangle {
             id: pill
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
+            // 以 pill 中心为基准上下同时扩展：静息 60 高、顶部在 0，展开到 90 时向上 15。
+            y: 30 - height / 2
             width: 560
             height: bar.pillHeight
             radius: bar.pillRadius
@@ -243,8 +244,8 @@ Item {
             id: rippleClip
             width: 560
             height: bar.pillHeight
-            anchors.top: parent.top
-            anchors.horizontalCenter: parent.horizontalCenter
+            y: pill.y
+            x: pill.x
 
             Canvas {
                 anchors.fill: parent
@@ -324,8 +325,9 @@ Item {
             id: icon
             width: 32; height: 32
             x: 280 - 16 + bar.iconX
-            y: 12
+            y: pill.y + (pill.height - height) / 2
             scale: bar.iconScale
+            transformOrigin: Item.Center
             opacity: bar.iconOpacity
             Rectangle { anchors.fill: parent; radius: 16; color: "#E9E7E4"; opacity: bar.circleOpacity }
             Rectangle { width: 18; height: 18; radius: 4.5; anchors.centerIn: parent; color: "#E9E7E4"; opacity: bar.squareOpacity }
