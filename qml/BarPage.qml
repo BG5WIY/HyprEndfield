@@ -236,13 +236,6 @@ Item {
                 }
             }
 
-            HudSettingsRow {
-                width: 590; title: qsTr("显卡索引"); mode: "slider"
-                sliderValue: Number(settingsController.gpuSource)
-                sliderMinimum: -1; sliderMaximum: 8; sliderStep: 1; sliderFormat: "decimal"
-                onSliderMoved: (value, final) => { if (final) settingsController.set("gpuSource", Math.round(value)) }
-            }
-
             Item { width: 590; height: 4 }
 
             HudSettingsRow {
