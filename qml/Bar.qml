@@ -198,12 +198,15 @@ Item {
                 NumberAnimation { target: bar; property: "rippleOpacity"; to: 0; duration: 180 }
             }
         }
-        // C：图标继续移到最左，圆变方
+        // C：图标继续移到最左，圆变方；圆环缩回图标周围并保留
         ParallelAnimation {
             NumberAnimation { target: bar; property: "iconX"; to: -245; duration: 240; easing.type: Easing.OutCubic }
             NumberAnimation { target: bar; property: "iconScale"; to: 0.56; duration: 240; easing.type: Easing.InOutCubic }
             NumberAnimation { target: bar; property: "circleOpacity"; to: 0; duration: 180 }
             NumberAnimation { target: bar; property: "squareOpacity"; to: 1; duration: 180 }
+            // 圆环收回到图标周围并保留，动画结束后仍可见。
+            NumberAnimation { target: bar; property: "rippleScale"; to: 0.6; duration: 300; easing.type: Easing.InOutCubic }
+            NumberAnimation { target: bar; property: "rippleOpacity"; to: 0.5; duration: 240 }
         }
         // D：标题淡出，内容进入，pill 收回
         ParallelAnimation {
@@ -281,11 +284,11 @@ Item {
                     ctx.globalAlpha = strength
                     const cx = iconCx
                     const cy = iconCy
-                    ctx.fillStyle = "#656363"
+                    ctx.fillStyle = "#7C7C7C"
                     ctx.beginPath()
                     ctx.arc(cx, cy, 80 * spread, 0, Math.PI * 2)
                     ctx.fill()
-                    ctx.strokeStyle = "#656363"
+                    ctx.strokeStyle = "#7C7C7C"
                     ctx.lineWidth = 5
                     ctx.beginPath()
                     ctx.arc(cx, cy, 110 * spread, 0, Math.PI * 2)
