@@ -20,6 +20,8 @@ HyprEndfield 把 [EndfieldHUD](https://github.com/DDDuoDuo/EndfieldHUD) 的 HUD 
 - 查看存储、CPU、内存、GPU、网络、电池和设施警报，使用倒计时与正计时专注模式。
 - 绑定鹰角账号，显示终末地资料和明日方舟理智信息；也可以使用独立的 Linux 自定义名片。
 - 运行“融合！山团团！”小游戏，查看 HUD 自身的事件日志。
+- 使用原生 layer-shell 顶部状态栏（已替代 zmd-charge-plus 子模块）：轮播处理器（主频）、内存、电池、网络、显卡（频率与来源选择）、磁盘、上传/下载和时间，带每项独立图标、圆环扩散动画、时钟、缩放和「状态栏」设置页。
+- 使用 HUD 风格的通知窗口替代 mako：接管 org.freedesktop.Notifications，在屏幕右上角显示应用图标、标题、高亮数值、关闭按钮和超时。
 
 地图模块已经移除。
 
@@ -154,6 +156,8 @@ layer-rule {
 - 影像加工：[qml/MediaAssemblyPage.qml](qml/MediaAssemblyPage.qml)、[src/mediaeditor.cpp](src/mediaeditor.cpp)、[src/mediaengine.cpp](src/mediaengine.cpp)
 - 投影、绘图和点阵背景：[qml/ProjectionPage.qml](qml/ProjectionPage.qml)、[qml/ProjectionWorkspace.qml](qml/ProjectionWorkspace.qml)、[src/projectioncanvas.cpp](src/projectioncanvas.cpp)
 - 存储、活动监视器和设施警报：[qml/StoragePage.qml](qml/StoragePage.qml)、[src/storagecontroller.cpp](src/storagecontroller.cpp)、[qml/ActivityPage.qml](qml/ActivityPage.qml)、[src/activitycollector.cpp](src/activitycollector.cpp)、[src/facilitycontroller.cpp](src/facilitycontroller.cpp)
+- 顶部状态栏：[qml/Bar.qml](qml/Bar.qml)、[qml/BarPage.qml](qml/BarPage.qml)、[qml/BarGlyph.qml](qml/BarGlyph.qml)、[src/barwindow.cpp](src/barwindow.cpp)
+- 通知窗口：[qml/NotificationWindow.qml](qml/NotificationWindow.qml)、[src/notificationserver.cpp](src/notificationserver.cpp)、[src/notificationwindow.cpp](src/notificationwindow.cpp)
 - 电池：[qml/BatteryBadge.qml](qml/BatteryBadge.qml)、[src/batterycontroller.cpp](src/batterycontroller.cpp)
 - 两套个人名片：[qml/ProfilePage.qml](qml/ProfilePage.qml)、[qml/MenuBadge.qml](qml/MenuBadge.qml)、[qml/GameProfileBadge.qml](qml/GameProfileBadge.qml)、[src/profilecontroller.cpp](src/profilecontroller.cpp)
 - 账号绑定和理智信息：[qml/AccountPage.qml](qml/AccountPage.qml)、[src/accountcontroller.cpp](src/accountcontroller.cpp)、[src/accountlogin.cpp](src/accountlogin.cpp)、`src/endfield/modules/hypergryph_account_*`
@@ -179,7 +183,7 @@ layer-rule {
 
 - SPlayer：[src/nowplayingcontroller.cpp](src/nowplayingcontroller.cpp)、[src/splayerlyrics.cpp](src/splayerlyrics.cpp)
 - Dolphin：[src/storagecontroller.cpp](src/storagecontroller.cpp)、[src/fileshelfcontroller.cpp](src/fileshelfcontroller.cpp)
-- Bash：[src/terminalsession.cpp](src/terminalsession.cpp)
+- 登录 shell（按 chsh 的 `getpwuid` 结果启动，如 zsh）：[src/terminalsession.cpp](src/terminalsession.cpp)
 - PulseAudio 后端：[src/audiocontroller.cpp](src/audiocontroller.cpp)
 - 名片中的 `ARCH` 和合成器名称（`appController.compositorName`）：[qml/MenuBadge.qml](qml/MenuBadge.qml)
 

@@ -1,3 +1,0 @@
-[submodule "third_party/zmd-charge-plus"]
-	path = third_party/zmd-charge-plus
-	url = git@github.com:GlacierGlimmer/zmd-charge-plus-for-linux.git
