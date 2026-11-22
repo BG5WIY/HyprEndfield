@@ -439,6 +439,17 @@ Item {
             anchors.fill: pill
             opacity: bar.contentOpacity
 
+            // 中央时钟
+            Text {
+                anchors.centerIn: parent
+                text: bar.clockTick >= 0 ? Qt.formatTime(new Date(), "HH:mm") : ""
+                color: "#F2F2F2"
+                font.family: harmonyMedium.name
+                font.pixelSize: 22
+                font.weight: Font.Medium
+                renderType: Text.CurveRendering
+            }
+
             Row {
                 x: 64
                 anchors.verticalCenter: parent.verticalCenter
