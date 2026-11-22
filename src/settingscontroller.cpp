@@ -92,7 +92,8 @@ SettingsController::SettingsController(QObject *parent, QString preferences, QSt
         {"batteryMethod", 0}, {"batteryDuration", 10.0}, {"batteryPlacement", 0}, {"batteryScale", 1.0},
         {"batteryX", .5}, {"batteryY", .12}, {"batteryMetric", 0},
         {"wallpaperBackend", "wallpaperengine"}, {"wallpaperCommand", ""},
-        {"barEnabled", true}, {"barInterval", 6}, {"barAnimation", true}, {"barScale", 1.0},
+        {"barEnabled", true},
+        {"gpuSource", -1}, {"barInterval", 6}, {"barAnimation", true}, {"barScale", 1.0},
         {"barProfiles", QStringList{"cpu", "memory", "battery", "network", "gpu"}}};
     QFile manifest(":/assets/settings/application-icons/manifest.json");
     if (manifest.open(QIODevice::ReadOnly)) {
@@ -135,7 +136,7 @@ QVariant SettingsController::normalized(const QString &key, const QVariant &inpu
         {"parallaxIntensity", {0, 2}}, {"perspectiveIntensity", {0, 2}}, {"backgroundBrightness", {0, 1}}, {"blurAmount", {0, 1}},
         {"themeIndex", {0, 2}}, {"clockStyleIndex", {0, 4}}, {"centerLogoIndex", {0, 4}}, {"accentIndex", {0, 5}},
         {"languageIndex", {0, 5}}, {"soundVolume", {0, 100}}, {"batteryMethod", {0, 2}}, {"batteryDuration", {1, 60}}, {"batteryPlacement", {0, 1}},
-        {"batteryScale", {.65, 1.6}}, {"batteryX", {0, 1}}, {"batteryY", {0, 1}}, {"batteryMetric", {0, 5}}};
+        {"gpuSource", std::pair<double, double>(-1, 8)}, {"batteryScale", {.65, 1.6}}, {"batteryX", {0, 1}}, {"batteryY", {0, 1}}, {"batteryMetric", {0, 5}}};
     if (ranges.contains(key)) {
         bool ok = false; double v = input.toDouble(&ok);
         if (!ok || !std::isfinite(v)) return m_defaults.value(key);

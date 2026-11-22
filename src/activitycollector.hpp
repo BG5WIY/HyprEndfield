@@ -17,11 +17,13 @@ struct Process {
     std::optional<double> gpuPercent;
 };
 struct App { QString id, name, icon; QList<int> pids; };
+struct GpuCard { int index = 0; double busy = -1; double freqMhz = 0; };
 struct Reading {
     double seconds = 0;
     std::optional<Counters> cpu;
     std::optional<quint64> memoryUsed, memoryTotal;
     std::optional<double> gpu;
+    QList<GpuCard> gpuCards;
     QMap<QString, Counters> network, disks;
     QMap<int, Process> processes;
     QMap<QString, App> apps;

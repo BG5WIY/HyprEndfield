@@ -46,7 +46,21 @@ Item {
 
     readonly property real cpu: latest.cpu !== undefined && latest.cpu !== null && latest.cpu !== "" ? Number(latest.cpu) : NaN
     readonly property real cpuMhz: Number(latest.cpuMhz || 0)
-    readonly property real gpu: latest.gpu !== undefined && latest.gpu !== null && latest.gpu !== "" ? Number(latest.gpu) : NaN
+    readonly property var gpuCards: latest.gpuCards || []
+    readonly property var gpuCard: {
+        const cards = gpuCards
+        if (!cards || cards.length === 0) return ({})
+        const source = Number(settingsController.gpuSource)
+        if (!isNaN(source) && source >= 0) {
+            for (const card of cards) if (card.index === source) return card
+            return cards[0]
+        }
+        let best = cards[0]
+        for (const card of cards) if ((card.busy || 0) > (best.busy || 0)) best = card
+        return best
+    }
+    readonly property real gpuBusy: gpuCard && gpuCard.busy !== undefined && gpuCard.busy >= 0 ? Number(gpuCard.busy) : NaN
+    readonly property real gpuFreq: gpuCard && gpuCard.freqMhz > 0 ? Number(gpuCard.freqMhz) : 0
     readonly property real memUsed: Number(latest.memoryUsed || 0)
     readonly property real memTotal: Number(latest.memoryTotal || 0)
     readonly property real memPercent: memTotal > 0 ? memUsed / memTotal * 100 : NaN
@@ -106,8 +120,11 @@ Item {
             return { primary: rate(download), secondary: rateUnit(download),
                      right: rate(upload), suffix: rateUnit(upload).replace("/s", ""), progress: 0 }
         case "gpu":
-            return { primary: isNaN(gpu) ? "--" : String(Math.round(gpu)), secondary: "",
-                     right: percentText(gpu), suffix: "%", progress: progressOf(gpu) }
+            // 和 CPU 一样：左侧主频，右侧使用率。
+            return { primary: gpuFreq > 0 ? (gpuFreq / 1000).toFixed(1) : "--",
+                     secondary: gpuFreq > 0 ? "GHz" : "",
+                     right: isNaN(gpuBusy) ? "--" : String(Math.round(gpuBusy)), suffix: "%",
+                     progress: isNaN(gpuBusy) ? 0 : gpuBusy / 100 }
         default:
             // 左侧显示主频，右侧保留使用率百分比。
             return { primary: cpuMhz > 0 ? (cpuMhz / 1000).toFixed(1) : "--",

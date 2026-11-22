@@ -189,6 +189,53 @@ Item {
                 }
             }
 
+            Item {
+                width: 590; height: 26
+                Text {
+                    x: 18; y: 10; text: qsTr("显卡来源"); color: Appearance.tone("#EDEDED")
+                    font.family: harmonyMedium.name; font.pixelSize: 13; renderType: Text.CurveRendering
+                }
+                Text {
+                    x: 100; y: 12; text: qsTr("(自动选择占用最高的显卡)")
+                    color: Appearance.tone("#8A8A8A")
+                    font.family: harmonyRegular.name; font.pixelSize: 9; renderType: Text.CurveRendering
+                }
+            }
+
+            Row {
+                width: 590; spacing: 6
+                Repeater {
+                    model: {
+                        const cards = activityController.state.latest.gpuCards || []
+                        const options = [{ value: -1, label: qsTr("自动") }]
+                        for (const card of cards) options.push({ value: card.index, label: "GPU " + card.index })
+                        return options
+                    }
+                    delegate: Item {
+                        required property var modelData
+                        readonly property bool active: Number(settingsController.gpuSource) === Number(modelData.value)
+                        width: 130; height: 34
+                        Rectangle {
+                            anchors.fill: parent
+                            color: active ? "#2E2E2E" : "#1E1E1E"
+                            border.width: 1
+                            border.color: active ? Appearance.accent("#FFFA00") : "#3A3A3A"
+                        }
+                        Text {
+                            anchors.centerIn: parent
+                            text: modelData.label
+                            color: active ? Appearance.accent("#FFFA00") : Appearance.tone("#C9C9C9")
+                            font.family: harmonyMedium.name; font.pixelSize: 12
+                            renderType: Text.CurveRendering
+                        }
+                        MouseArea {
+                            anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: settingsController.set("gpuSource", modelData.value)
+                        }
+                    }
+                }
+            }
+
             Item { width: 590; height: 4 }
 
             HudSettingsRow {
