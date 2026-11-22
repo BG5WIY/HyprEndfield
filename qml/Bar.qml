@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import "Appearance.js" as Appearance
 
 // 常驻顶部 bar：按 zmd-charge 的动画顺序复刻。
@@ -238,22 +239,46 @@ Item {
         }
 
         // 圆 + 两个圆环：圆心跟随图标，只显示在 pill 的黑色背景内。
+        // 用圆角遮罩而不是矩形 clip，边缘才会贴合 pill 的圆角。
         Item {
             id: rippleClip
             width: 560
             height: bar.pillHeight
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
-            clip: true
+
             Item {
-                width: 1; height: 1
-                x: bar.iconCenterX
-                y: bar.iconCenterY
-                scale: bar.rippleScale
-                opacity: bar.rippleOpacity
-                Rectangle { width: 160; height: 160; radius: 80; anchors.centerIn: parent; color: "#656363" }
-                Rectangle { width: 220; height: 220; radius: 110; anchors.centerIn: parent; color: "transparent"; border.width: 5; border.color: "#656363" }
-                Rectangle { width: 280; height: 280; radius: 140; anchors.centerIn: parent; color: "transparent"; border.width: 3.5; border.color: "#656363" }
+                id: rippleSource
+                anchors.fill: parent
+                visible: false
+                layer.enabled: true
+                Item {
+                    width: 1; height: 1
+                    x: bar.iconCenterX
+                    y: bar.iconCenterY
+                    scale: bar.rippleScale
+                    opacity: bar.rippleOpacity
+                    Rectangle { width: 160; height: 160; radius: 80; anchors.centerIn: parent; color: "#656363" }
+                    Rectangle { width: 220; height: 220; radius: 110; anchors.centerIn: parent; color: "transparent"; border.width: 5; border.color: "#656363" }
+                    Rectangle { width: 280; height: 280; radius: 140; anchors.centerIn: parent; color: "transparent"; border.width: 3.5; border.color: "#656363" }
+                }
+            }
+
+            MultiEffect {
+                anchors.fill: parent
+                source: rippleSource
+                maskEnabled: true
+                maskSource: rippleMask
+                maskThresholdMin: 0.3
+                maskSpreadAtMin: 1.0
+            }
+
+            Item {
+                id: rippleMask
+                anchors.fill: parent
+                visible: false
+                layer.enabled: true
+                Rectangle { anchors.fill: parent; radius: bar.pillRadius; color: "white" }
             }
         }
 
