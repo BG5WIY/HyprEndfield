@@ -132,7 +132,7 @@ Item {
 
     // 圆/圆环的圆心跟随图标
     readonly property real iconCenterX: 280 + iconX
-    readonly property real iconCenterY: 30
+    readonly property real iconCenterY: pillHeight / 2
 
     function advance() {
         if (animating || profiles.length === 0) return
