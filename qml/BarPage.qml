@@ -22,9 +22,18 @@ Item {
         { key: "time", label: qsTr("时间") }
     ]
 
+    // QStringList 从 C++ 过来是 sequence 类型，不一定是 JS Array，
+    // 统一复制成真正的数组再操作。
+    function asArray(raw) {
+        if (!raw) return []
+        if (Array.isArray(raw)) return raw.slice()
+        const out = []
+        const count = raw.length || 0
+        for (let i = 0; i < count; ++i) out.push(raw[i])
+        return out
+    }
     function barProfileList() {
-        const raw = settingsController.barProfiles
-        return Array.isArray(raw) ? raw.slice() : []
+        return asArray(settingsController.barProfiles)
     }
     function profileEnabled(key) {
         return barProfileList().indexOf(key) >= 0

@@ -26,7 +26,12 @@ Item {
     ]
     readonly property var enabledKeys: {
         const raw = settingsController.barProfiles
-        return Array.isArray(raw) ? raw : []
+        if (!raw) return []
+        if (Array.isArray(raw)) return raw
+        const out = []
+        const count = raw.length || 0
+        for (let i = 0; i < count; ++i) out.push(raw[i])
+        return out
     }
     // barProfiles 的顺序就是轮播顺序。
     readonly property var profiles: {
@@ -151,11 +156,15 @@ Item {
     // 每次轮播：展开（标题+波纹）→ 图标左移/变方形 → 收拢 → 内容进入。
     SequentialAnimation {
         id: cycle
-        // 展开
+        // 先让旧内容淡出，再切到下一项，标题就不会先显示上一个名称。
         ParallelAnimation {
-            NumberAnimation { target: bar; property: "contentOpacity"; to: 0; duration: 200 }
-            NumberAnimation { target: bar; property: "titleOpacity"; to: 1; duration: 260; easing.type: Easing.OutCubic }
-            NumberAnimation { target: bar; property: "iconX"; to: 0; duration: 300; easing.type: Easing.OutCubic }
+            NumberAnimation { target: bar; property: "contentOpacity"; to: 0; duration: 160 }
+            NumberAnimation { target: bar; property: "iconOpacity"; to: 0; duration: 160 }
+        }
+        PropertyAction { target: bar; property: "index"; value: (bar.index + 1) % bar.profiles.length }
+        // 展开：标题显示的是即将轮播到的这一项
+        ParallelAnimation {
+            NumberAnimation { target: bar; property: "titleOpacity"; to: 1; duration: 240; easing.type: Easing.OutCubic }
             NumberAnimation { target: bar; property: "iconScale"; to: 1; duration: 240; easing.type: Easing.OutBack }
             NumberAnimation { target: bar; property: "circleOpacity"; to: 1; duration: 200 }
             NumberAnimation { target: bar; property: "squareOpacity"; to: 0; duration: 200 }
@@ -163,22 +172,17 @@ Item {
             NumberAnimation { target: bar; property: "pillRadius"; to: 18; duration: 320; easing.type: Easing.InOutCubic }
             ScriptAction { script: { ripple.restart() } }
         }
-        PauseAnimation { duration: 220 }
-        PropertyAction { target: bar; property: "index"; value: (bar.index + 1) % bar.profiles.length }
-        // 收拢：图标左移、圆变方
+        PauseAnimation { duration: 240 }
+        // 收拢：标题淡出，新内容进入
         ParallelAnimation {
             NumberAnimation { target: bar; property: "titleOpacity"; to: 0; duration: 200 }
-            NumberAnimation { target: bar; property: "iconX"; to: -245; duration: 420; easing.type: Easing.OutCubic }
-            NumberAnimation { target: bar; property: "iconScale"; to: 0.56; duration: 380; easing.type: Easing.InOutCubic }
-            NumberAnimation { target: bar; property: "circleOpacity"; to: 0; duration: 240 }
-            NumberAnimation { target: bar; property: "squareOpacity"; to: 1; duration: 240 }
-            NumberAnimation { target: bar; property: "pillHeight"; to: 60; duration: 380; easing.type: Easing.InOutCubic }
-            NumberAnimation { target: bar; property: "pillRadius"; to: 30; duration: 380; easing.type: Easing.InOutCubic }
-        }
-        // 内容进入
-        ParallelAnimation {
-            NumberAnimation { target: bar; property: "contentOpacity"; to: 1; duration: 260; easing.type: Easing.OutCubic }
-            NumberAnimation { target: bar; property: "numberY"; from: 8; to: 0; duration: 260; easing.type: Easing.OutCubic }
+            NumberAnimation { target: bar; property: "iconOpacity"; to: 1; duration: 240 }
+            NumberAnimation { target: bar; property: "iconScale"; to: 0.56; duration: 320; easing.type: Easing.InOutCubic }
+            NumberAnimation { target: bar; property: "circleOpacity"; to: 0; duration: 220 }
+            NumberAnimation { target: bar; property: "squareOpacity"; to: 1; duration: 220 }
+            NumberAnimation { target: bar; property: "contentOpacity"; to: 1; duration: 280; easing.type: Easing.OutCubic }
+            NumberAnimation { target: bar; property: "pillHeight"; to: 60; duration: 340; easing.type: Easing.InOutCubic }
+            NumberAnimation { target: bar; property: "pillRadius"; to: 30; duration: 340; easing.type: Easing.InOutCubic }
         }
         PauseAnimation { duration: 3600 }
         ScriptAction { script: { bar.animating = false } }
