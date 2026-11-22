@@ -46,8 +46,8 @@ BarWindow::BarWindow(QQmlEngine *engine, SettingsController *settings, QObject *
     updateGeometry();
 }
 
-// 不占工作区（exclusive zone 0），窗口只覆盖 pill 和动画需要的范围；
-// 输入区域再限制到 pill 附近，未播放动画时的空白位置点击穿透。
+// 静息态按 pill 高度预留工作区；播放动画时占位不变，展开和波纹覆盖到
+// 工作区里。输入区域只覆盖静息 pill，动画溢出部分和空白都不拦截点击。
 void BarWindow::updateGeometry() {
     if (!m_window) return;
     const double raw = m_settings ? m_settings->value(QStringLiteral("barScale")).toDouble() : 1.0;
@@ -55,11 +55,10 @@ void BarWindow::updateGeometry() {
     const int pillWidth = qRound(560 * scale);
     const int windowWidth = pillWidth + 40;
     const int windowHeight = 160;
+    const int restingBottom = qRound(14 + 60 * scale + 6);
     m_window->resize(windowWidth, windowHeight);
-    if (m_layer) m_layer->setExclusiveZone(0);
+    if (m_layer) m_layer->setExclusiveZone(restingBottom);
     if (m_item) { m_item->setWidth(windowWidth); m_item->setHeight(windowHeight); }
-    // 只让静息态 pill 接收输入；动画展开、波纹等超出部分保持穿透，
-    // 避免未播放动画时的空白挡住下面的窗口。
     const QRect pillRect((windowWidth - pillWidth) / 2 - 8, 12, pillWidth + 16, qRound(60 * scale) + 8);
     m_window->setMask(QRegion(pillRect));
 }
