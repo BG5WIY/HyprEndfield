@@ -109,8 +109,9 @@ Item {
             return { primary: isNaN(gpu) ? "--" : String(Math.round(gpu)), secondary: "",
                      right: percentText(gpu), suffix: "%", progress: progressOf(gpu) }
         default:
-            return { primary: isNaN(cpu) ? "--" : String(Math.round(cpu)),
-                     secondary: cpuMhz > 0 ? (cpuMhz / 1000).toFixed(1) + " GHz" : "",
+            // 左侧显示主频，右侧保留使用率百分比。
+            return { primary: cpuMhz > 0 ? (cpuMhz / 1000).toFixed(1) : "--",
+                     secondary: cpuMhz > 0 ? "GHz" : "",
                      right: percentText(cpu), suffix: "%", progress: progressOf(cpu) }
         }
     }
