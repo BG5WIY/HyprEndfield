@@ -164,12 +164,12 @@ Item {
     SequentialAnimation {
         id: cycle
         PropertyAction { target: bar; property: "index"; value: (bar.index + 1) % bar.profiles.length }
-        // A：旧内容淡出，图标/圆出现在中央
+        // A：旧内容淡出，图标回到正中央、缩到最小准备出现
         ParallelAnimation {
             NumberAnimation { target: bar; property: "contentOpacity"; to: 0; duration: 140 }
             PropertyAction { target: bar; property: "iconX"; value: 0 }
             PropertyAction { target: bar; property: "iconOpacity"; value: 0 }
-            PropertyAction { target: bar; property: "iconScale"; value: 0.5 }
+            PropertyAction { target: bar; property: "iconScale"; value: 0.1 }
             PropertyAction { target: bar; property: "circleOpacity"; value: 1 }
             PropertyAction { target: bar; property: "squareOpacity"; value: 0 }
             PropertyAction { target: bar; property: "titleOpacity"; value: 0 }
@@ -178,20 +178,21 @@ Item {
             NumberAnimation { target: bar; property: "pillHeight"; to: 90; duration: 260; easing.type: Easing.OutCubic }
             NumberAnimation { target: bar; property: "pillRadius"; to: 18; duration: 260; easing.type: Easing.InOutCubic }
         }
-        // B：图标出现（中央）并开始左移；圆/圆环扩散
+        // B1：图标在 bar 正中央由小到大出现，圆环同步亮起
         ParallelAnimation {
-            NumberAnimation { target: bar; property: "iconOpacity"; to: 1; duration: 120 }
-            NumberAnimation { target: bar; property: "iconScale"; to: 1; duration: 220; easing.type: Easing.OutBack }
+            NumberAnimation { target: bar; property: "iconOpacity"; to: 1; duration: 100 }
+            NumberAnimation { target: bar; property: "iconScale"; from: 0.1; to: 1; duration: 240; easing.type: Easing.OutBack }
             NumberAnimation { target: bar; property: "rippleOpacity"; to: 0.5; duration: 160 }
+            NumberAnimation { target: bar; property: "rippleScale"; from: 0.18; to: 0.3; duration: 240; easing.type: Easing.OutCubic }
+        }
+        // B2：图标和圆环一起左移并扩大，圆环扫过中央时标题淡入
+        ParallelAnimation {
             NumberAnimation { target: bar; property: "iconX"; to: -140; duration: 900; easing.type: Easing.OutCubic }
-            // 扩散先快后慢，接近右端 25% 时几乎不动
-            NumberAnimation { target: bar; property: "rippleScale"; from: 0.18; to: 2.6; duration: 900; easing.type: Easing.OutCubic }
-            // 圆环扫过中央时标题缓慢淡入
+            NumberAnimation { target: bar; property: "rippleScale"; from: 0.3; to: 2.6; duration: 900; easing.type: Easing.OutCubic }
             SequentialAnimation {
                 PauseAnimation { duration: 420 }
                 NumberAnimation { target: bar; property: "titleOpacity"; to: 1; duration: 460; easing.type: Easing.InOutCubic }
             }
-            // 接近右端 25% 时圆环淡化
             SequentialAnimation {
                 PauseAnimation { duration: 720 }
                 NumberAnimation { target: bar; property: "rippleOpacity"; to: 0; duration: 180 }
