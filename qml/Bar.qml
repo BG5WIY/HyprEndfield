@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Effects
 import "Appearance.js" as Appearance
 
 // 常驻顶部 bar：按 zmd-charge 的动画顺序复刻。
@@ -238,8 +237,7 @@ Item {
             clip: true
         }
 
-        // 圆 + 两个圆环：圆心跟随图标，只显示在 pill 的黑色背景内。
-        // 用圆角遮罩而不是矩形 clip，边缘才会贴合 pill 的圆角。
+        // 圆 + 两个圆环：Canvas 直接按 pill 的圆角半径裁剪，边缘与 pill 完全一致。
         Item {
             id: rippleClip
             width: 560
@@ -247,38 +245,54 @@ Item {
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
 
-            Item {
-                id: rippleSource
+            Canvas {
                 anchors.fill: parent
-                visible: false
-                layer.enabled: true
-                Item {
-                    width: 1; height: 1
-                    x: bar.iconCenterX
-                    y: bar.iconCenterY
-                    scale: bar.rippleScale
-                    opacity: bar.rippleOpacity
-                    Rectangle { width: 160; height: 160; radius: 80; anchors.centerIn: parent; color: "#656363" }
-                    Rectangle { width: 220; height: 220; radius: 110; anchors.centerIn: parent; color: "transparent"; border.width: 5; border.color: "#656363" }
-                    Rectangle { width: 280; height: 280; radius: 140; anchors.centerIn: parent; color: "transparent"; border.width: 3.5; border.color: "#656363" }
+                property real iconCx: bar.iconCenterX
+                property real iconCy: bar.iconCenterY
+                property real spread: bar.rippleScale
+                property real strength: bar.rippleOpacity
+                property real corner: bar.pillRadius
+                onIconCxChanged: requestPaint()
+                onIconCyChanged: requestPaint()
+                onSpreadChanged: requestPaint()
+                onStrengthChanged: requestPaint()
+                onCornerChanged: requestPaint()
+                onWidthChanged: requestPaint()
+                onHeightChanged: requestPaint()
+                onPaint: {
+                    const ctx = getContext("2d")
+                    ctx.reset()
+                    const r = Math.max(0, Math.min(corner, Math.min(width, height) / 2))
+                    ctx.beginPath()
+                    ctx.moveTo(r, 0)
+                    ctx.lineTo(width - r, 0)
+                    ctx.arcTo(width, 0, width, r, r)
+                    ctx.lineTo(width, height - r)
+                    ctx.arcTo(width, height, width - r, height, r)
+                    ctx.lineTo(r, height)
+                    ctx.arcTo(0, height, 0, height - r, r)
+                    ctx.lineTo(0, r)
+                    ctx.arcTo(0, 0, r, 0, r)
+                    ctx.closePath()
+                    ctx.clip()
+
+                    ctx.globalAlpha = strength
+                    const cx = iconCx
+                    const cy = iconCy
+                    ctx.fillStyle = "#656363"
+                    ctx.beginPath()
+                    ctx.arc(cx, cy, 80 * spread, 0, Math.PI * 2)
+                    ctx.fill()
+                    ctx.strokeStyle = "#656363"
+                    ctx.lineWidth = 5
+                    ctx.beginPath()
+                    ctx.arc(cx, cy, 110 * spread, 0, Math.PI * 2)
+                    ctx.stroke()
+                    ctx.lineWidth = 3.5
+                    ctx.beginPath()
+                    ctx.arc(cx, cy, 140 * spread, 0, Math.PI * 2)
+                    ctx.stroke()
                 }
-            }
-
-            MultiEffect {
-                anchors.fill: parent
-                source: rippleSource
-                maskEnabled: true
-                maskSource: rippleMask
-                maskThresholdMin: 0.3
-                maskSpreadAtMin: 1.0
-            }
-
-            Item {
-                id: rippleMask
-                anchors.fill: parent
-                visible: false
-                layer.enabled: true
-                Rectangle { anchors.fill: parent; radius: bar.pillRadius; color: "white" }
             }
         }
 
