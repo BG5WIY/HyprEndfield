@@ -286,16 +286,16 @@ Item {
                     const cy = iconCy
                     ctx.fillStyle = "#7C7C7C"
                     ctx.beginPath()
-                    ctx.arc(cx, cy, 80 * spread, 0, Math.PI * 2)
+                    ctx.arc(cx, cy, 45 * spread, 0, Math.PI * 2)
                     ctx.fill()
                     ctx.strokeStyle = "#7C7C7C"
                     ctx.lineWidth = 5
                     ctx.beginPath()
-                    ctx.arc(cx, cy, 110 * spread, 0, Math.PI * 2)
+                    ctx.arc(cx, cy, 80 * spread, 0, Math.PI * 2)
                     ctx.stroke()
                     ctx.lineWidth = 3.5
                     ctx.beginPath()
-                    ctx.arc(cx, cy, 140 * spread, 0, Math.PI * 2)
+                    ctx.arc(cx, cy, 120 * spread, 0, Math.PI * 2)
                     ctx.stroke()
                 }
             }
