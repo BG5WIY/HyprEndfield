@@ -3,7 +3,7 @@ import "ModuleNumbering.js" as ModuleNumbering
 import "Appearance.js" as Appearance
 
 // 内置顶部状态栏（layer-shell bar）的设置页。
-// 轮播间隔、缩放、动画和显示项直接写 settingsController，Bar.qml 实时生效。
+// 轮播项、间隔、缩放、动画直接写 settingsController，Bar.qml 实时生效。
 Item {
     id: barPage
     width: 590; height: 510
@@ -15,7 +15,11 @@ Item {
         { key: "memory", label: qsTr("内存") },
         { key: "battery", label: qsTr("电池") },
         { key: "network", label: qsTr("网络") },
-        { key: "gpu", label: qsTr("显卡") }
+        { key: "gpu", label: qsTr("显卡") },
+        { key: "disk", label: qsTr("磁盘") },
+        { key: "download", label: qsTr("下载") },
+        { key: "upload", label: qsTr("上传") },
+        { key: "time", label: qsTr("时间") }
     ]
 
     function profileEnabled(key) {
@@ -29,6 +33,16 @@ Item {
         if (!on && index >= 0) list.splice(index, 1)
         // 至少保留一项，否则 bar 没有可轮播的内容。
         if (list.length === 0) return
+        settingsController.set("barProfiles", list)
+    }
+    function moveProfile(key, delta) {
+        const list = (settingsController.barProfiles || []).slice()
+        const index = list.indexOf(key)
+        if (index < 0) return
+        const target = Math.max(0, Math.min(list.length - 1, index + delta))
+        if (index === target) return
+        list.splice(index, 1)
+        list.splice(target, 0, key)
         settingsController.set("barProfiles", list)
     }
 
@@ -83,6 +97,85 @@ Item {
             id: content
             width: 590; spacing: 6
 
+            Item {
+                width: 590; height: 26
+                Text {
+                    x: 18; y: 10; text: qsTr("轮播项"); color: Appearance.tone("#EDEDED")
+                    font.family: harmonyMedium.name; font.pixelSize: 13; renderType: Text.CurveRendering
+                }
+                Text {
+                    x: 100; y: 12; text: qsTr("(开关控制显示，箭头调整轮播顺序)")
+                    color: Appearance.tone("#8A8A8A")
+                    font.family: harmonyRegular.name; font.pixelSize: 9; renderType: Text.CurveRendering
+                }
+            }
+
+            Column {
+                width: 590; spacing: 4
+                Repeater {
+                    model: barPage.profileDefs
+                    delegate: Item {
+                        required property var modelData
+                        readonly property bool active: barPage.profileEnabled(modelData.key)
+                        width: 590; height: 34
+                        Rectangle {
+                            anchors.fill: parent
+                            color: hover.hovered ? "#2E2E2E" : "#1E1E1E"
+                            border.width: 1
+                            border.color: active ? Appearance.accent("#FFFA00") : "#3A3A3A"
+                        }
+                        Rectangle {
+                            x: 10; y: 8; width: 4; height: 18
+                            visible: active
+                            color: Appearance.accent("#FFFA00")
+                        }
+                        Text {
+                            x: 24; anchors.verticalCenter: parent.verticalCenter
+                            text: modelData.label
+                            color: active ? Appearance.tone("#EDEDED") : Appearance.tone("#8A8A8A")
+                            font.family: harmonyMedium.name; font.pixelSize: 12; renderType: Text.CurveRendering
+                        }
+                        Item {
+                            anchors.right: parent.right; anchors.rightMargin: 78
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 21; height: 21
+                            Rectangle { anchors.fill: parent; color: upHover.hovered ? "#3A3A3A" : "#262626" }
+                            Text { anchors.centerIn: parent; text: "↑"; color: Appearance.tone("#C9C9C9"); font.pixelSize: 11 }
+                            HoverHandler { id: upHover }
+                            MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: barPage.moveProfile(modelData.key, -1) }
+                        }
+                        Item {
+                            anchors.right: parent.right; anchors.rightMargin: 50
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 21; height: 21
+                            Rectangle { anchors.fill: parent; color: downHover.hovered ? "#3A3A3A" : "#262626" }
+                            Text { anchors.centerIn: parent; text: "↓"; color: Appearance.tone("#C9C9C9"); font.pixelSize: 11 }
+                            HoverHandler { id: downHover }
+                            MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: barPage.moveProfile(modelData.key, 1) }
+                        }
+                        Rectangle {
+                            anchors.right: parent.right; anchors.rightMargin: 14
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 26; height: 14; radius: 7
+                            color: active ? Appearance.accent("#FFFA00") : "#3A3A3A"
+                            Rectangle {
+                                width: 10; height: 10; radius: 5; y: 2
+                                x: active ? 14 : 2
+                                color: active ? "#111111" : "#777777"
+                            }
+                        }
+                        HoverHandler { id: hover }
+                        MouseArea {
+                            anchors.fill: parent; anchors.rightMargin: 108
+                            hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: barPage.setProfile(modelData.key, !barPage.profileEnabled(modelData.key))
+                        }
+                    }
+                }
+            }
+
+            Item { width: 590; height: 4 }
+
             HudSettingsRow {
                 width: 590; title: qsTr("启用状态栏"); mode: "toggle"
                 switched: settingsController.barEnabled
@@ -104,62 +197,6 @@ Item {
                 sliderValue: Number(settingsController.barScale) || 1
                 sliderMinimum: 0.6; sliderMaximum: 1.5; sliderStep: 0.05; sliderFormat: "scale"
                 onSliderMoved: (value, final) => { if (final) settingsController.set("barScale", value) }
-            }
-
-            Item {
-                width: 590; height: 30
-                Text {
-                    x: 18; y: 12; text: qsTr("显示项"); color: Appearance.tone("#EDEDED")
-                    font.family: harmonyMedium.name; font.pixelSize: 13; renderType: Text.CurveRendering
-                }
-                Text {
-                    x: 100; y: 15; text: qsTr("(轮播顺序固定，至少保留一项)")
-                    color: Appearance.tone("#8A8A8A")
-                    font.family: harmonyRegular.name; font.pixelSize: 9; renderType: Text.CurveRendering
-                }
-            }
-
-            Grid {
-                columns: 2; columnSpacing: 6; rowSpacing: 6
-                Repeater {
-                    model: barPage.profileDefs
-                    delegate: Item {
-                        required property var modelData
-                        width: 292; height: 34
-                        Rectangle {
-                            anchors.fill: parent
-                            color: hover.hovered ? "#343434" : "#242424"
-                            border.width: 1
-                            border.color: barPage.profileEnabled(modelData.key) ? Appearance.accent("#FFFA00") : "#444444"
-                        }
-                        Rectangle {
-                            x: 10; y: 9; width: 4; height: 16
-                            visible: barPage.profileEnabled(modelData.key)
-                            color: Appearance.accent("#FFFA00")
-                        }
-                        Text {
-                            x: 24; anchors.verticalCenter: parent.verticalCenter
-                            text: modelData.label
-                            color: barPage.profileEnabled(modelData.key) ? Appearance.tone("#EDEDED") : Appearance.tone("#8A8A8A")
-                            font.family: harmonyMedium.name; font.pixelSize: 12; renderType: Text.CurveRendering
-                        }
-                        Rectangle {
-                            x: width - 38; anchors.verticalCenter: parent.verticalCenter
-                            width: 26; height: 14; radius: 7
-                            color: barPage.profileEnabled(modelData.key) ? Appearance.accent("#FFFA00") : "#3A3A3A"
-                            Rectangle {
-                                width: 10; height: 10; radius: 5; y: 2
-                                x: barPage.profileEnabled(modelData.key) ? 14 : 2
-                                color: barPage.profileEnabled(modelData.key) ? "#111111" : "#777777"
-                            }
-                        }
-                        HoverHandler { id: hover }
-                        MouseArea {
-                            anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                            onClicked: barPage.setProfile(modelData.key, !barPage.profileEnabled(modelData.key))
-                        }
-                    }
-                }
             }
 
             Item { width: 590; height: 6 }

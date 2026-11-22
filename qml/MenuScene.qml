@@ -182,15 +182,6 @@ Item {
             presented: visible && appController.hudOpen
             reduceMotion: menu.shell.displaySettings.reduceMotion
         }
-        ChargePage {
-            x: 630
-            y: 238
-            scale: 1.12
-            transformOrigin: Item.TopLeft
-            visible: menu.shell.selectedModule === "charge"
-            presented: visible && appController.hudOpen
-            reduceMotion: menu.shell.displaySettings.reduceMotion
-        }
         BarPage {
             x: 630
             y: 238

@@ -136,11 +136,6 @@ Item {
             icon: "qrc:/assets/icons/wallpaper.png"
         },
         {
-            key: "charge",
-            label: qsTr("充能 HUD"),
-            icon: "qrc:/assets/icons/charge.png"
-        },
-        {
             key: "bar",
             label: qsTr("状态栏"),
             icon: "qrc:/assets/icons/bar.png"

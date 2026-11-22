@@ -73,7 +73,7 @@ const QStringList accents{"#FAD41F", "#6EDFE8", "#A8E58B", "#C9A2FF", "#FF8F78"}
 }
 
 QStringList SettingsController::defaultModules() {
-    return {"notes", "fileShelf", "clipboard", "archive", "nowPlaying", "volume", "reader", "workMode", "calendar", "wallpaper", "charge", "bar", "projection", "mediaAssembly", "minigame", "eventLog", "account"};
+    return {"notes", "fileShelf", "clipboard", "archive", "nowPlaying", "volume", "reader", "workMode", "calendar", "wallpaper", "bar", "projection", "mediaAssembly", "minigame", "eventLog", "account"};
 }
 
 SettingsController::SettingsController(QObject *parent, QString preferences, QString autostart, QString data)

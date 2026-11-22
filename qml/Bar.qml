@@ -18,11 +18,16 @@ Item {
         { key: "memory", title: qsTr("内存"), tag: "/// MEMORY" },
         { key: "battery", title: qsTr("电池"), tag: "/// BATTERY" },
         { key: "network", title: qsTr("网络"), tag: "/// NETWORK" },
-        { key: "gpu", title: qsTr("显卡"), tag: "/// GRAPHICS" }
+        { key: "gpu", title: qsTr("显卡"), tag: "/// GRAPHICS" },
+        { key: "disk", title: qsTr("磁盘"), tag: "/// STORAGE" },
+        { key: "download", title: qsTr("下载"), tag: "/// DOWNLOAD" },
+        { key: "upload", title: qsTr("上传"), tag: "/// UPLOAD" },
+        { key: "time", title: qsTr("时间"), tag: "/// CLOCK" }
     ]
     readonly property var enabledKeys: settingsController.barProfiles || []
+    // barProfiles 的顺序就是轮播顺序。
     readonly property var profiles: {
-        const list = allProfiles.filter(entry => enabledKeys.indexOf(entry.key) >= 0)
+        const list = enabledKeys.map(key => allProfiles.find(entry => entry.key === key)).filter(entry => !!entry)
         return list.length > 0 ? list : allProfiles
     }
     readonly property var current: profiles[Math.max(0, Math.min(profiles.length - 1, index))]
@@ -52,8 +57,23 @@ Item {
     function percentText(value) { return isNaN(value) ? "--" : String(Math.round(value)) }
     function progressOf(value) { return isNaN(value) ? 0 : Math.max(0, Math.min(1, value / 100)) }
 
-    function valueFor(key) {
+    property int clockTick: 0
+    Timer { interval: 1000; running: true; repeat: true; onTriggered: bar.clockTick++ }
+
+    function valueFor(key, tick) {
         switch (key) {
+        case "time":
+            return { primary: Qt.formatTime(new Date(), "HH:mm"), secondary: "",
+                     right: Qt.formatTime(new Date(), "ss"), suffix: "", progress: 0 }
+        case "disk":
+            return { primary: rate(latest.read), secondary: qsTr("读"),
+                     right: rate(latest.write), suffix: qsTr("写"), progress: 0 }
+        case "download":
+            return { primary: rate(download), secondary: rateUnit(download),
+                     right: "", suffix: "", progress: 0 }
+        case "upload":
+            return { primary: rate(upload), secondary: rateUnit(upload),
+                     right: "", suffix: "", progress: 0 }
         case "memory":
             return { primary: isNaN(memPercent) ? "--" : gigabyte(memUsed),
                      secondary: memTotal > 0 ? "/" + gigabyte(memTotal) + " GB" : "",
@@ -74,7 +94,7 @@ Item {
                      right: percentText(cpu), suffix: "%", progress: progressOf(cpu) }
         }
     }
-    readonly property var value: valueFor(current.key)
+    readonly property var value: valueFor(current.key, clockTick)
 
     // ── 动画状态（时间线来自 zmd-charge HudAnimations，6s 基准） ────────
     property real pillScale: 0.6
