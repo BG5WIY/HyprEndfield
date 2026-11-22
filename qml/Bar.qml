@@ -237,16 +237,24 @@ Item {
             clip: true
         }
 
-        // 圆 + 两个圆环：圆心跟随图标，只在 bar 内显示（pill 裁剪）
+        // 圆 + 两个圆环：圆心跟随图标，只显示在 pill 的黑色背景内。
         Item {
-            width: 1; height: 1
-            x: bar.iconCenterX
-            y: bar.iconCenterY
-            scale: bar.rippleScale
-            opacity: bar.rippleOpacity
-            Rectangle { width: 160; height: 160; radius: 80; anchors.centerIn: parent; color: "#656363" }
-            Rectangle { width: 220; height: 220; radius: 110; anchors.centerIn: parent; color: "transparent"; border.width: 5; border.color: "#656363" }
-            Rectangle { width: 280; height: 280; radius: 140; anchors.centerIn: parent; color: "transparent"; border.width: 3.5; border.color: "#656363" }
+            id: rippleClip
+            width: 560
+            height: bar.pillHeight
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            clip: true
+            Item {
+                width: 1; height: 1
+                x: bar.iconCenterX
+                y: bar.iconCenterY
+                scale: bar.rippleScale
+                opacity: bar.rippleOpacity
+                Rectangle { width: 160; height: 160; radius: 80; anchors.centerIn: parent; color: "#656363" }
+                Rectangle { width: 220; height: 220; radius: 110; anchors.centerIn: parent; color: "transparent"; border.width: 5; border.color: "#656363" }
+                Rectangle { width: 280; height: 280; radius: 140; anchors.centerIn: parent; color: "transparent"; border.width: 3.5; border.color: "#656363" }
+            }
         }
 
         // 标题（圆环扫过中央时淡入）
