@@ -45,6 +45,7 @@ Item {
     readonly property var current: profiles[Math.max(0, Math.min(profiles.length - 1, index))]
 
     readonly property real cpu: latest.cpu !== undefined && latest.cpu !== null && latest.cpu !== "" ? Number(latest.cpu) : NaN
+    readonly property real cpuMhz: Number(latest.cpuMhz || 0)
     readonly property real gpu: latest.gpu !== undefined && latest.gpu !== null && latest.gpu !== "" ? Number(latest.gpu) : NaN
     readonly property real memUsed: Number(latest.memoryUsed || 0)
     readonly property real memTotal: Number(latest.memoryTotal || 0)
@@ -108,7 +109,8 @@ Item {
             return { primary: isNaN(gpu) ? "--" : String(Math.round(gpu)), secondary: "",
                      right: percentText(gpu), suffix: "%", progress: progressOf(gpu) }
         default:
-            return { primary: isNaN(cpu) ? "--" : String(Math.round(cpu)), secondary: "",
+            return { primary: isNaN(cpu) ? "--" : String(Math.round(cpu)),
+                     secondary: cpuMhz > 0 ? (cpuMhz / 1000).toFixed(1) + " GHz" : "",
                      right: percentText(cpu), suffix: "%", progress: progressOf(cpu) }
         }
     }
