@@ -397,7 +397,7 @@ int main(int argc, char *argv[])
     }
 
     // 常驻顶部 bar（layer-shell top 层）。数据和动画都在 Bar.qml 里。
-    BarWindow bar(&engine);
+    BarWindow bar(&engine, &settings);
     bar.setEnabled(settings.value(QStringLiteral("barEnabled")).toBool());
     QObject::connect(&settings, &SettingsController::preferenceChanged, &bar,
                      [&bar](const QString &key, const QVariant &value) {

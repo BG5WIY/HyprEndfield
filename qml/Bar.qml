@@ -6,7 +6,8 @@ import "Appearance.js" as Appearance
 // 由 BarWindow 放进 wlr-layer-shell（top 层）窗口，不占工作区。
 Item {
     id: bar
-    height: 160
+    width: parent ? parent.width : 1920
+    height: parent ? parent.height : 110
 
     readonly property var activity: activityController.state
     readonly property var latest: activity.latest || ({})
